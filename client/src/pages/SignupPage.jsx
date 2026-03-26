@@ -24,7 +24,7 @@ const ROLES = [
 ]
 
 export default function SignupPage() {
-  const { signUp } = useAuth()
+  const { signUp, refreshProfile } = useAuth()
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
@@ -72,11 +72,11 @@ export default function SignupPage() {
         // Email confirmation required
         setSuccess(true)
       } else if (data.session) {
-        // Session immediately available — give auth state time to settle
-        // then navigate (AuthContext will fetch profile in background)
-        setTimeout(() => navigate('/dashboard', { replace: true }), 300)
+        // Profile was synced in AuthContext.signUp — now explicitly fetch it
+        // so the dashboard has user data immediately
+        await refreshProfile()
+        setTimeout(() => navigate('/dashboard', { replace: true }), 100)
       } else {
-        // Fallback: no user and no session — shouldn't happen, go to login
         navigate('/login', { replace: true })
       }
     } catch (err) {

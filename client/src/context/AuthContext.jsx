@@ -15,8 +15,12 @@ export function AuthProvider({ children }) {
       const { data } = await api.get('/api/auth/me')
       setUser(data.user)
       return data.user
-    } catch {
-      setUser(null)
+    } catch (err) {
+      // PROFILE_NOT_FOUND means signup sync is still in progress – don't sign out
+      const code = err.response?.data?.code
+      if (code !== 'PROFILE_NOT_FOUND') {
+        setUser(null)
+      }
       return null
     }
   }, [])
@@ -74,18 +78,28 @@ export function AuthProvider({ children }) {
 
     if (error) throw error
 
-    // Sync profile to Neon DB
+    // Sync profile to Neon DB immediately using the new session token.
+    // This MUST happen before the SIGNED_IN event fires, which triggers
+    // fetchProfile — otherwise the profile won't exist yet and auth fails.
     if (data.user) {
       try {
-        await api.post('/api/auth/signup', {
-          auth_id:   data.user.id,
-          email:     data.user.email,
-          full_name: fullName,
-          role,
-        })
+        // Use the access_token from the newly created session (if available)
+        const token = data.session?.access_token
+        await api.post(
+          '/api/auth/signup',
+          {
+            auth_id:   data.user.id,
+            email:     data.user.email,
+            full_name: fullName,
+            role,
+          },
+          token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+        )
       } catch (syncErr) {
-        // Non-fatal: profile sync may fail if email not confirmed yet
-        console.warn('Profile sync skipped (email confirmation may be required):', syncErr.message)
+        // If it's a 409 (already exists), that's fine — profile is already there
+        if (syncErr.response?.status !== 409) {
+          console.warn('Profile sync warning:', syncErr.response?.data?.error || syncErr.message)
+        }
       }
     }
 
