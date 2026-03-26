@@ -10,7 +10,6 @@ import InviteCodeDisplay from '../components/classroom/InviteCodeDisplay'
 import SyllabusTree from '../components/syllabus/SyllabusTree'
 import GapAnalysisPanel from '../components/syllabus/GapAnalysisPanel'
 import { useClassroom } from '../context/ClassroomContext'
-import { useSyllabus } from '../context/SyllabusContext'
 import { SyllabusProvider } from '../context/SyllabusContext'
 import { useAuth } from '../context/AuthContext'
 

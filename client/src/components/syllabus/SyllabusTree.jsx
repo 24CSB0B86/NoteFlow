@@ -66,7 +66,7 @@ export default function SyllabusTree({ classroomId }) {
     await deleteNode(classroomId, node.id)
   }
 
-  const handleEdit = (node) => setModal({ mode: 'edit', node })
+  const handleEdit = (node) => setModal({ mode: 'edit', node: { ...node, _isEdit: true } })
   const handleAddChild = (node) => setModal({ mode: 'add', node: { ...node, _isAddChild: true } })
   const handleAddRoot = () => setModal({ mode: 'add', node: null })
 
@@ -130,11 +130,10 @@ export default function SyllabusTree({ classroomId }) {
         </DndContext>
       )}
 
-      {/* Modal */}
       {modal && (
         <AddNodeModal
           classroomId={classroomId}
-          parentNode={modal.mode === 'add' ? modal.node : modal.node}
+          parentNode={modal.node}
           onClose={() => setModal(null)}
         />
       )}

@@ -15,8 +15,8 @@ const TYPE_OPTIONS = {
 export default function AddNodeModal({ classroomId, parentNode, onClose }) {
   const { addNode, updateNode } = useSyllabus()
 
-  // If parentNode is passed with an existing id and title, we're in "edit" mode
-  const isEdit = parentNode?.id && !parentNode._isAddChild
+  // If parentNode has _isEdit flag, we're in "rename" mode
+  const isEdit = !!parentNode?._isEdit
 
   const defaultType = parentNode?._isAddChild
     ? (parentNode.node_type === 'unit' ? 'topic' : 'subtopic')

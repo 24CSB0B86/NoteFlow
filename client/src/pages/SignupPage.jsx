@@ -68,11 +68,16 @@ export default function SignupPage() {
         role:     form.role,
       })
 
-      // If Supabase requires email confirmation, tell the user
       if (data.user && !data.session) {
+        // Email confirmation required
         setSuccess(true)
+      } else if (data.session) {
+        // Session immediately available — give auth state time to settle
+        // then navigate (AuthContext will fetch profile in background)
+        setTimeout(() => navigate('/dashboard', { replace: true }), 300)
       } else {
-        navigate('/dashboard', { replace: true })
+        // Fallback: no user and no session — shouldn't happen, go to login
+        navigate('/login', { replace: true })
       }
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.')

@@ -4,29 +4,22 @@ import { Loader2 } from 'lucide-react'
 
 /**
  * Wraps routes that require authentication.
- * Redirects to /login if no session is found.
- * Optionally restrict to specific roles via `requiredRole`.
- *
- * Usage:
- *   <ProtectedRoute>
- *     <DashboardPage />
- *   </ProtectedRoute>
- *
- *   <ProtectedRoute requiredRole="professor">
- *     <CreateClassroomPage />
- *   </ProtectedRoute>
+ * - Shows a spinner only during the initial auth check
+ * - Redirects to /login if no session
+ * - Optionally restricts to a specific role via `requiredRole`
  */
 export default function ProtectedRoute({ children, requiredRole }) {
-  const { isAuthenticated, loading, user } = useAuth()
+  const { isAuthenticated, loading, user, session } = useAuth()
   const location = useLocation()
 
-  // Show a centered spinner while auth state is being determined
-  if (loading) {
+  // Only block on loading if we have no session at all (initial load)
+  // If session exists, let the page render — profile may still be fetching
+  if (loading && !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+          <p className="text-sm text-slate-400">Loading…</p>
         </div>
       </div>
     )
@@ -36,7 +29,8 @@ export default function ProtectedRoute({ children, requiredRole }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  // Role check — only block if user profile is loaded
+  if (requiredRole && user && user.role !== requiredRole) {
     return <Navigate to="/dashboard" replace />
   }
 

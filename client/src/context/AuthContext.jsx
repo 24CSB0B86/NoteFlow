@@ -5,48 +5,60 @@ import api from '../utils/api'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [session, setSession]     = useState(null)   // Supabase session
-  const [user, setUser]           = useState(null)   // Neon DB profile
-  const [loading, setLoading]     = useState(true)
+  const [session, setSession]   = useState(null)
+  const [user, setUser]         = useState(null)
+  const [loading, setLoading]   = useState(true)
 
   // Fetch user profile from our Express API
   const fetchProfile = useCallback(async () => {
     try {
       const { data } = await api.get('/api/auth/me')
       setUser(data.user)
+      return data.user
     } catch {
       setUser(null)
+      return null
     }
   }, [])
 
   useEffect(() => {
-    // Get current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let mounted = true
+
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
       setSession(session)
       if (session) {
-        fetchProfile().finally(() => setLoading(false))
-      } else {
-        setLoading(false)
+        await fetchProfile()
       }
+      // Always resolve loading, even if profile fetch fails
+      setLoading(false)
     })
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return
         setSession(session)
 
         if (event === 'SIGNED_IN' && session) {
           await fetchProfile()
+          setLoading(false)
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
+          setLoading(false)
         } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Re-fetch profile on token refresh to keep data fresh
           await fetchProfile()
+        } else if (event === 'PASSWORD_RECOVERY') {
+          setLoading(false)
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [fetchProfile])
 
   // ── Auth Actions ─────────────────────────────────────────────
@@ -62,24 +74,26 @@ export function AuthProvider({ children }) {
 
     if (error) throw error
 
-    // Sync profile to Neon DB regardless of email confirmation requirement
+    // Sync profile to Neon DB
     if (data.user) {
-      await api.post('/api/auth/signup', {
-        auth_id:   data.user.id,
-        email:     data.user.email,
-        full_name: fullName,
-        role,
-      })
+      try {
+        await api.post('/api/auth/signup', {
+          auth_id:   data.user.id,
+          email:     data.user.email,
+          full_name: fullName,
+          role,
+        })
+      } catch (syncErr) {
+        // Non-fatal: profile sync may fail if email not confirmed yet
+        console.warn('Profile sync skipped (email confirmation may be required):', syncErr.message)
+      }
     }
 
     return data
   }
 
   const signIn = async ({ email, password }) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }
