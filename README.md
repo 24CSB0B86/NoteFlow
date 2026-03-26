@@ -1,4 +1,4 @@
-# EduShare 📚
+# NoteFlow 📚
 
 An educational resource sharing platform for professors and students.
 
@@ -16,7 +16,7 @@ An educational resource sharing platform for professors and students.
 ## Project Structure
 
 ```
-edushare/
+noteflow/
 ├── client/          # React + Vite frontend
 ├── server/          # Node.js + Express backend
 ├── package.json     # Root workspace config
@@ -29,7 +29,7 @@ edushare/
 
 ```bash
 git clone <repo-url>
-cd edushare
+cd noteflow
 npm install
 ```
 

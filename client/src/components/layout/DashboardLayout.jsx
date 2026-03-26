@@ -46,7 +46,7 @@ export default function DashboardLayout({ children }) {
         <div className="p-1.5 rounded-lg bg-indigo-600 shadow-lg shadow-indigo-500/30">
           <BookOpen className="h-5 w-5 text-white" />
         </div>
-        <span className="text-xl font-bold text-white tracking-tight">EduShare</span>
+        <span className="text-xl font-bold text-white tracking-tight">NoteFlow</span>
         {mobile && (
           <button onClick={() => setSidebarOpen(false)} className="ml-auto text-slate-400 hover:text-white transition-colors">
             <X className="h-5 w-5" />
@@ -138,7 +138,7 @@ export default function DashboardLayout({ children }) {
             <div className="p-1 rounded-lg bg-indigo-600">
               <BookOpen className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">EduShare</span>
+            <span className="text-lg font-bold text-white">NoteFlow</span>
           </div>
         </header>
 

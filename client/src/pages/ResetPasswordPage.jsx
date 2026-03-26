@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
           <div className="p-2 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/30">
             <BookOpen className="h-6 w-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-tight">EduShare</span>
+          <span className="text-2xl font-bold text-white tracking-tight">NoteFlow</span>
         </div>
 
         {/* Email sent confirmation */}

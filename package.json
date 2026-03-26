@@ -1,7 +1,7 @@
 {
-  "name": "edushare",
+  "name": "noteflow",
   "version": "1.0.0",
-  "description": "Educational resource sharing platform for professors and students",
+  "description": "NoteFlow - Educational resource sharing platform for professors and students",
   "private": true,
   "workspaces": [
     "client",

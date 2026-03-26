@@ -18,7 +18,7 @@ app.use(helmet())
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
-  'https://edushare.vercel.app', // Update with your Vercel URL
+  'https://noteflow.vercel.app', // Update with your Vercel URL
 ]
 
 app.use(cors({

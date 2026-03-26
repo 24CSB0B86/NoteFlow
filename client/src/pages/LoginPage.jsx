@@ -55,14 +55,14 @@ export default function LoginPage() {
           <div className="p-2 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/30">
             <BookOpen className="h-6 w-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-tight">EduShare</span>
+          <span className="text-2xl font-bold text-white tracking-tight">NoteFlow</span>
         </div>
 
         <Card className="border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl text-white">
           <CardHeader className="pb-4">
             <CardTitle className="text-2xl text-white">Welcome back</CardTitle>
             <CardDescription className="text-slate-400">
-              Sign in to your EduShare account
+              Sign in to your NoteFlow account
             </CardDescription>
           </CardHeader>
 

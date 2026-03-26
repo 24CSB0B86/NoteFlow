@@ -1,5 +1,5 @@
 -- ============================================================
--- EduShare - Initial Database Schema
+-- NoteFlow - Initial Database Schema
 -- Run this in your Neon DB SQL Editor
 -- ============================================================
 
