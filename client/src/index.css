@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* shadcn/ui CSS variable tokens — light mode (unused, we use dark) */
+    --background:   222.2 84% 4.9%;
+    --foreground:   210 40% 98%;
+    --card:         222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover:      222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary:      217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary:    217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted:        217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent:       217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive:  0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border:       217.2 32.6% 17.5%;
+    --input:        217.2 32.6% 17.5%;
+    --ring:         224.3 76.3% 48%;
+    --radius:       0.6rem;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism helper */
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent;
+  }
+
+  /* Subtle glow effect */
+  .glow-indigo {
+    box-shadow: 0 0 40px theme('colors.indigo.600' / 20%);
+  }
+}
