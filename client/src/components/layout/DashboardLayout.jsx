@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {filteredNav.map(({ to, label, icon: Icon }) => {
-          const active = location.pathname === to
+          const active = location.pathname === to || (to !== '/dashboard' && location.pathname.startsWith(to))
           return (
             <Link
               key={to}

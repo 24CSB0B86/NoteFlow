@@ -6,7 +6,9 @@ import rateLimit from 'express-rate-limit'
 import 'express-async-errors'
 import dotenv from 'dotenv'
 
-import authRoutes from './routes/auth.routes.js'
+import authRoutes      from './routes/auth.routes.js'
+import classroomRoutes from './routes/classroom.routes.js'
+import syllabusRoutes  from './routes/syllabus.routes.js'
 
 dotenv.config()
 
@@ -74,7 +76,9 @@ app.get('/health', (req, res) => {
 })
 
 // ── API Routes ────────────────────────────────────────────────
-app.use('/api/auth', authRoutes)
+app.use('/api/auth',       authRoutes)
+app.use('/api/classrooms', classroomRoutes)
+app.use('/api/syllabus',   syllabusRoutes)
 
 // ── 404 Handler ───────────────────────────────────────────────
 app.use((req, res) => {
