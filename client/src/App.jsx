@@ -9,6 +9,7 @@ import ResetPasswordPage  from './pages/ResetPasswordPage'
 import DashboardPage      from './pages/DashboardPage'
 import ClassroomsPage     from './pages/ClassroomsPage'
 import ClassroomDetailPage from './pages/ClassroomDetailPage'
+import SettingsPage       from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -33,6 +34,10 @@ export default function App() {
 
             <Route path="/classrooms/:id" element={
               <ProtectedRoute><ClassroomDetailPage /></ProtectedRoute>
+            } />
+
+            <Route path="/settings" element={
+              <ProtectedRoute><SettingsPage /></ProtectedRoute>
             } />
 
             {/* Default redirect */}

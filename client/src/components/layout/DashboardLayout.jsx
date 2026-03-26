@@ -17,10 +17,9 @@ import {
 import { cn } from '../../utils/cn'
 
 const navItems = [
-  { to: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
-  { to: '/classrooms',  label: 'Classrooms', icon: FolderOpen },
-  { to: '/members',     label: 'Members',    icon: Users, professorOnly: true },
-  { to: '/settings',    label: 'Settings',   icon: Settings },
+  { to: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
+  { to: '/classrooms', label: 'Classrooms', icon: FolderOpen },
+  { to: '/settings',   label: 'Settings',   icon: Settings },
 ]
 
 export default function DashboardLayout({ children }) {
@@ -30,8 +29,13 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/login', { replace: true })
+    try {
+      await signOut()
+    } catch {
+      // ignore errors
+    } finally {
+      navigate('/login', { replace: true })
+    }
   }
 
   const filteredNav = navItems.filter((item) => !item.professorOnly || isProfessor)

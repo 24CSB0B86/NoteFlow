@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { BookOpen, Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
-  const { signIn } = useAuth()
+  const { signIn, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/dashboard'
@@ -33,6 +33,8 @@ export default function LoginPage() {
     setError('')
     try {
       await signIn({ email: form.email, password: form.password })
+      // Fetch profile before navigating so dashboard has user data immediately
+      await refreshProfile()
       navigate(from, { replace: true })
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.')
