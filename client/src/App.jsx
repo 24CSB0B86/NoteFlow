@@ -9,6 +9,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import ClassroomsPage from './pages/ClassroomsPage'
 import ClassroomDetailPage from './pages/ClassroomDetailPage'
+import ResourceViewerPage from './pages/ResourceViewerPage'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/classrooms" element={<ProtectedRoute><ClassroomsPage /></ProtectedRoute>} />
               <Route path="/classrooms/:id" element={<ProtectedRoute><ClassroomDetailPage /></ProtectedRoute>} />
+              <Route path="/classrooms/:classroomId/resources/:resourceId/view" element={<ProtectedRoute><ResourceViewerPage /></ProtectedRoute>} />
 
               {/* Redirects */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -12,6 +12,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['pdfjs-dist'],
+    exclude: ['pdfjs-dist/build/pdf.worker.entry'],
+  },
   server: {
     port: 5173,
     proxy: {
@@ -20,5 +24,8 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  worker: {
+    format: 'es',
   },
 })

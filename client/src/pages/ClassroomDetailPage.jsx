@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useClassroom } from '../context/ClassroomContext'
 import { useSyllabus } from '../context/SyllabusContext'
@@ -10,24 +10,27 @@ import { Label } from '../components/ui/label'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import ResourceList from '../components/resources/ResourceList'
 import {
   Users, ChevronRight, ChevronDown, Plus, Trash2,
-  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft
+  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 // ── Syllabus Node (recursive) ─────────────────────────────────────────────────
-function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, depth = 0 }) {
+function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, onSelectNode, selectedNodeId, depth = 0 }) {
   const [expanded, setExpanded] = useState(true)
   const hasChildren = node.children?.length > 0
   const resourceCount = parseInt(node.resource_count || 0)
   const isGap = resourceCount === 0 && node.node_type !== 'unit'
+  const isSelected = selectedNodeId === node.id
 
   return (
     <div className={cn('animate-fade-in', depth > 0 && 'ml-5 border-l border-border pl-4')}>
       <div className={cn(
         'flex items-center gap-2 py-2 px-3 rounded-lg group hover:bg-accent/50 transition-colors',
-        isGap && node.node_type !== 'unit' && 'hover:bg-red-500/5'
+        isSelected && 'bg-primary/10 hover:bg-primary/10',
+        isGap && node.node_type !== 'unit' && !isSelected && 'hover:bg-red-500/5'
       )}>
         {/* Expand toggle */}
         {hasChildren ? (
@@ -38,13 +41,17 @@ function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, depth = 0 }) {
           <div className="w-4 h-4 shrink-0" />
         )}
 
-        {/* Node label */}
-        <span className={cn(
-          'flex-1 text-sm',
-          node.node_type === 'unit' ? 'font-semibold text-base' : 'font-medium'
-        )}>
+        {/* Node label – clickable to view resources */}
+        <button
+          className={cn(
+            'flex-1 text-sm text-left transition-colors',
+            node.node_type === 'unit' ? 'font-semibold text-base' : 'font-medium',
+            node.node_type !== 'unit' && 'hover:text-primary cursor-pointer',
+          )}
+          onClick={() => node.node_type !== 'unit' && onSelectNode?.(node)}
+        >
           {node.title}
-        </span>
+        </button>
 
         {/* Type badge */}
         <Badge variant="secondary" className="text-xs hidden sm:flex shrink-0 capitalize">
@@ -53,7 +60,11 @@ function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, depth = 0 }) {
 
         {/* Resource indicator */}
         {node.node_type !== 'unit' && (
-          <div className="flex items-center gap-1 shrink-0" title={`${resourceCount} resource${resourceCount !== 1 ? 's' : ''}`}>
+          <button
+            onClick={() => onSelectNode?.(node)}
+            className="flex items-center gap-1 shrink-0"
+            title={`${resourceCount} resource${resourceCount !== 1 ? 's' : ''} – click to view`}
+          >
             {isGap ? (
               <Badge variant="gap" className="gap-1">
                 <AlertCircle className="w-3 h-3" /> No resources
@@ -63,7 +74,7 @@ function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, depth = 0 }) {
                 <CheckCircle className="w-3 h-3" /> {resourceCount}
               </Badge>
             )}
-          </div>
+          </button>
         )}
 
         {/* Professor actions */}
@@ -93,7 +104,11 @@ function SyllabusNodeItem({ node, isProfessor, onAdd, onDelete, depth = 0 }) {
       {expanded && hasChildren && (
         <div className="mt-1">
           {node.children.map(child => (
-            <SyllabusNodeItem key={child.id} node={child} isProfessor={isProfessor} onAdd={onAdd} onDelete={onDelete} depth={depth + 1} />
+            <SyllabusNodeItem
+              key={child.id} node={child} isProfessor={isProfessor}
+              onAdd={onAdd} onDelete={onDelete} onSelectNode={onSelectNode}
+              selectedNodeId={selectedNodeId} depth={depth + 1}
+            />
           ))}
         </div>
       )}
@@ -228,6 +243,7 @@ function GapAnalysisPanel({ classroomId }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ClassroomDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { fetchClassroom, currentClassroom, fetchMembers, members } = useClassroom()
   const { fetchSyllabus, tree, nodes, addNode, deleteNode } = useSyllabus()
@@ -235,6 +251,7 @@ export default function ClassroomDetailPage() {
   const [addModal, setAddModal] = useState({ open: false, parentId: null, nodeType: 'unit' })
   const [activeTab, setActiveTab] = useState('syllabus')
   const [loading, setLoading] = useState(true)
+  const [selectedNode, setSelectedNode] = useState(null) // node whose resources are shown
 
   const isProfessor = user?.role === 'professor'
 
@@ -328,38 +345,71 @@ export default function ClassroomDetailPage() {
 
         {/* Syllabus Tree Tab */}
         {activeTab === 'syllabus' && (
-          <div>
-            {isProfessor && (
-              <div className="flex justify-end mb-4">
-                <Button onClick={handleAddRoot} size="sm">
-                  <Plus className="w-4 h-4" /> Add Unit
-                </Button>
-              </div>
-            )}
-            {tree.length === 0 ? (
-              <Card className="glass border-border/50 border-dashed">
-                <CardContent className="pt-12 pb-12 text-center">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
-                  <h3 className="text-lg font-semibold mb-1">No syllabus yet</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isProfessor ? 'Click "Add Unit" to start building the syllabus.' : 'Your professor hasn\'t added a syllabus yet.'}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="glass border-border/50">
-                <CardContent className="pt-4 pb-4 space-y-1">
-                  {tree.map(node => (
-                    <SyllabusNodeItem
-                      key={node.id}
-                      node={node}
-                      isProfessor={isProfessor}
-                      onAdd={handleAddNode}
-                      onDelete={handleDeleteNode}
+          <div className="flex gap-6">
+            {/* Tree panel */}
+            <div className={cn('transition-all', selectedNode ? 'w-80 shrink-0' : 'flex-1')}>
+              {isProfessor && (
+                <div className="flex justify-end mb-4">
+                  <Button onClick={handleAddRoot} size="sm">
+                    <Plus className="w-4 h-4" /> Add Unit
+                  </Button>
+                </div>
+              )}
+              {tree.length === 0 ? (
+                <Card className="glass border-border/50 border-dashed">
+                  <CardContent className="pt-12 pb-12 text-center">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
+                    <h3 className="text-lg font-semibold mb-1">No syllabus yet</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {isProfessor ? 'Click "Add Unit" to start building the syllabus.' : 'Your professor hasn\'t added a syllabus yet.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="glass border-border/50">
+                  <CardContent className="pt-4 pb-4 space-y-1">
+                    {tree.map(node => (
+                      <SyllabusNodeItem
+                        key={node.id}
+                        node={node}
+                        isProfessor={isProfessor}
+                        onAdd={handleAddNode}
+                        onDelete={handleDeleteNode}
+                        onSelectNode={setSelectedNode}
+                        selectedNodeId={selectedNode?.id}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Resource panel (when a node is selected) */}
+            {selectedNode && (
+              <div className="flex-1 min-w-0 animate-fade-in">
+                <Card className="glass border-border/50 h-full">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FolderOpen className="w-4 h-4 text-primary" />
+                      <span className="font-semibold truncate">{selectedNode.title}</span>
+                      <button
+                        onClick={() => setSelectedNode(null)}
+                        className="ml-auto text-muted-foreground hover:text-foreground text-xs px-2 py-1 rounded hover:bg-muted"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <ResourceList
+                      nodeId={selectedNode.id}
+                      nodeTitle={selectedNode.title}
+                      classroomId={id}
+                      onViewResource={(resource) =>
+                        navigate(`/classrooms/${id}/resources/${resource.id}/view`)
+                      }
                     />
-                  ))}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         )}

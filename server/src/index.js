@@ -7,6 +7,9 @@ const morgan = require('morgan');
 const authRoutes = require('./routes/auth.routes');
 const classroomRoutes = require('./routes/classroom.routes');
 const syllabusRoutes = require('./routes/syllabus.routes');
+const resourceRoutes = require('./routes/resource.routes');
+const highlightRoutes = require('./routes/highlight.routes');
+const discussionRoutes = require('./routes/discussion.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +21,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Request/Response Logger (always print to terminal as required) ─────────────
 app.use(morgan((tokens, req, res) => {
@@ -34,6 +37,9 @@ app.use(morgan((tokens, req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/classrooms', classroomRoutes);
 app.use('/api/syllabus', syllabusRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/highlights', highlightRoutes);
+app.use('/api/discussions', discussionRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
