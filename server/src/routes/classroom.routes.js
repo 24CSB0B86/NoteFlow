@@ -1,40 +1,17 @@
-import { Router } from 'express'
-import { authenticate } from '../middleware/auth.js'
-import { requireProfessor } from '../middleware/rbac.js'
-import {
-  requireClassroomMember,
-  requireClassroomProfessor,
-} from '../middleware/classroom.js'
-import {
-  createClassroom,
-  joinClassroom,
-  getMyClassrooms,
-  getClassroom,
-  deleteClassroom,
-  getMembers,
-} from '../controllers/classroom.controller.js'
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth.middleware');
+const { requireProfessor } = require('../middleware/role.middleware');
+const {
+  createClassroom, joinClassroom, getMyClassrooms,
+  getClassroom, getMembers, deleteClassroom
+} = require('../controllers/classroom.controller');
 
-const router = Router()
+router.get('/my-classes', authenticate, getMyClassrooms);
+router.post('/', authenticate, requireProfessor, createClassroom);
+router.post('/join', authenticate, joinClassroom);
+router.get('/:id', authenticate, getClassroom);
+router.get('/:id/members', authenticate, getMembers);
+router.delete('/:id', authenticate, requireProfessor, deleteClassroom);
 
-// All classroom routes require authentication
-router.use(authenticate)
-
-// POST /api/classrooms — Professor only
-router.post('/', requireProfessor, createClassroom)
-
-// POST /api/classrooms/join — Any authenticated user
-router.post('/join', joinClassroom)
-
-// GET /api/classrooms/my — All classrooms for current user
-router.get('/my', getMyClassrooms)
-
-// GET /api/classrooms/:id — Members only
-router.get('/:id', requireClassroomMember, getClassroom)
-
-// DELETE /api/classrooms/:id — Professor/owner only
-router.delete('/:id', requireClassroomMember, requireClassroomProfessor, deleteClassroom)
-
-// GET /api/classrooms/:id/members — Members only
-router.get('/:id/members', requireClassroomMember, getMembers)
-
-export default router
+module.exports = router;

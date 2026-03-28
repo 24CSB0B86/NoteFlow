@@ -1,34 +1,37 @@
-import pg from 'pg'
-import dotenv from 'dotenv'
-
-dotenv.config()
-
-const { Pool } = pg
+require('dotenv').config();
+const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // Required for Neon DB
-  },
-  max: 20,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+  connectionTimeoutMillis: 5000,
+});
 
-// Test connection on startup
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Database connection error:', err.message)
-    return
+pool.on('connect', () => {
+  console.log('🗄️  Connected to Neon DB (PostgreSQL)');
+});
+
+pool.on('error', (err) => {
+  console.error('🗄️  Database pool error:', err);
+});
+
+/**
+ * Helper: run a parameterised query and log it to the terminal.
+ */
+const query = async (text, params) => {
+  const start = Date.now();
+  try {
+    const res = await pool.query(text, params);
+    const duration = Date.now() - start;
+    console.log(`   🔵 DB query (${duration}ms): ${text.substring(0, 80).replace(/\s+/g, ' ')}…`);
+    return res;
+  } catch (err) {
+    console.error(`   🔴 DB query FAILED: ${text.substring(0, 80).replace(/\s+/g, ' ')}…`);
+    console.error(`   🔴 Error: ${err.message}`);
+    throw err;
   }
-  client.query('SELECT NOW()', (err, result) => {
-    release()
-    if (err) {
-      console.error('❌ Database query error:', err.message)
-    } else {
-      console.log('✅ Connected to Neon DB at:', result.rows[0].now)
-    }
-  })
-})
+};
 
-export default pool
+module.exports = { pool, query };

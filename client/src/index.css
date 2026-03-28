@@ -1,82 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* shadcn/ui CSS variable tokens — light mode (unused, we use dark) */
-    --background:   222.2 84% 4.9%;
-    --foreground:   210 40% 98%;
-    --card:         222.2 84% 4.9%;
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 9%;
     --card-foreground: 210 40% 98%;
-    --popover:      222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary:      217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary:    217.2 32.6% 17.5%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 263 90% 70%;
+
+    --primary: 263 90% 70%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted:        217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent:       217.2 32.6% 17.5%;
+
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive:  0 62.8% 30.6%;
+
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border:       217.2 32.6% 17.5%;
-    --input:        217.2 32.6% 17.5%;
-    --ring:         224.3 76.3% 48%;
-    --radius:       0.6rem;
-  }
 
-  * {
-    @apply border-border;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+    --radius: 0.75rem;
 
-  html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    min-height: 100vh;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground));
+    /* Custom NoteFlow colors */
+    --nf-purple: 263 90% 70%;
+    --nf-indigo: 238 76% 68%;
+    --nf-cyan: 199 89% 58%;
+    --nf-green: 142 71% 45%;
+    --nf-red: 0 84% 60%;
+    --nf-amber: 38 92% 50%;
   }
 }
 
-@layer utilities {
-  /* Glassmorphism helper */
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+@layer base {
+  * {
+    @apply border-border;
   }
 
-  /* Text gradient */
-  .text-gradient {
-    @apply bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent;
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Subtle glow effect */
-  .glow-indigo {
-    box-shadow: 0 0 40px theme('colors.indigo.600' / 20%);
+  html {
+    scroll-behavior: smooth;
   }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(263, 90%, 75%), hsl(199, 89%, 65%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Animated gradient border */
+.gradient-border {
+  background: linear-gradient(var(--background), var(--background)) padding-box,
+              linear-gradient(135deg, hsl(263, 90%, 70%), hsl(199, 89%, 58%)) border-box;
+  border: 1px solid transparent;
 }

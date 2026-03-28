@@ -1,17 +1,12 @@
 {
   "name": "noteflow",
   "version": "1.0.0",
-  "description": "NoteFlow - Educational resource sharing platform for professors and students",
-  "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "description": "NoteFlow – Educational Resource Sharing Platform",
   "scripts": {
-    "dev:client": "npm run dev --workspace=client",
-    "dev:server": "npm run dev --workspace=server",
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
-    "install:all": "npm install && npm install --workspace=client && npm install --workspace=server"
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

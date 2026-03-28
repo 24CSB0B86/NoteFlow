@@ -1,145 +1,126 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card'
-import { BookOpen, Loader2, Eye, EyeOff } from 'lucide-react'
+import { GraduationCap, Eye, EyeOff, LogIn } from 'lucide-react'
 
 export default function LoginPage() {
-  const { signIn, refreshProfile } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/dashboard'
-
   const [form, setForm] = useState({ email: '', password: '' })
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleChange = (e) => {
-    setError('')
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.password) {
-      setError('Please fill in all fields.')
-      return
-    }
-    setLoading(true)
     setError('')
+    setLoading(true)
     try {
-      await signIn({ email: form.email, password: form.password })
-      // Fetch profile before navigating so dashboard has user data immediately
-      await refreshProfile()
-      navigate(from, { replace: true })
+      await login(form)
+      navigate('/dashboard')
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.')
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
-      {/* Background decorative circles */}
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+      {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-violet-600/10 blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md animate-fade-in">
+      <div className="w-full max-w-md px-4 animate-slide-in relative z-10">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="p-2 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/30">
-            <BookOpen className="h-6 w-6 text-white" />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 mb-4 glow-purple">
+            <GraduationCap className="w-8 h-8 text-primary" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-tight">NoteFlow</span>
+          <h1 className="text-3xl font-bold gradient-text">NoteFlow</h1>
+          <p className="text-muted-foreground mt-1">Educational Resource Platform</p>
         </div>
 
-        <Card className="border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl text-white">
+        <Card className="glass border-border/50">
           <CardHeader className="pb-4">
-            <CardTitle className="text-2xl text-white">Welcome back</CardTitle>
-            <CardDescription className="text-slate-400">
-              Sign in to your NoteFlow account
-            </CardDescription>
+            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
-
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                  {error}
-                </div>
-              )}
-
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
-                  placeholder="you@university.edu"
+                  placeholder="jane@example.edu"
                   value={form.email}
-                  onChange={handleChange}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
+                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                   required
+                  autoComplete="email"
                 />
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-slate-300">Password</Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPwd ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={form.password}
-                    onChange={handleChange}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500 pr-10"
+                    onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     required
+                    autoComplete="current-password"
+                    className="pr-10"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                    onClick={() => setShowPwd(p => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
-            </CardContent>
 
-            <CardFooter className="flex flex-col gap-4 pt-2">
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition-all duration-200"
-                disabled={loading}
-              >
-                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…</> : 'Sign In'}
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end">
+                <Link to="/reset-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4" />
+                    Sign in
+                  </>
+                )}
               </Button>
 
-              <p className="text-sm text-slate-400 text-center">
+              <p className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{' '}
-                <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                  Create one
+                <Link to="/signup" className="text-primary hover:underline font-medium">
+                  Sign up
                 </Link>
               </p>
-            </CardFooter>
-          </form>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>

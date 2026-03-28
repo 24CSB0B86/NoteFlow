@@ -1,33 +1,16 @@
-import { Router } from 'express'
-import { authenticate } from '../middleware/auth.js'
-import { requireProfessor } from '../middleware/rbac.js'
-import { requireClassroomMember } from '../middleware/classroom.js'
-import {
-  getSyllabusTree,
-  addNode,
-  updateNode,
-  deleteNode,
-  getGapAnalysis,
-} from '../controllers/syllabus.controller.js'
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth.middleware');
+const { requireProfessor } = require('../middleware/role.middleware');
+const {
+  getSyllabus, createOrUpdateSyllabus, addNode, updateNode, deleteNode, getGapAnalysis
+} = require('../controllers/syllabus.controller');
 
-const router = Router()
+router.get('/:classroomId', authenticate, getSyllabus);
+router.post('/:classroomId', authenticate, requireProfessor, createOrUpdateSyllabus);
+router.post('/:classroomId/nodes', authenticate, requireProfessor, addNode);
+router.put('/nodes/:nodeId', authenticate, requireProfessor, updateNode);
+router.delete('/nodes/:nodeId', authenticate, requireProfessor, deleteNode);
+router.get('/:classroomId/gap-analysis', authenticate, getGapAnalysis);
 
-// All syllabus routes require authentication
-router.use(authenticate)
-
-// GET /api/syllabus/:classroomId — member access
-router.get('/:classroomId', requireClassroomMember, getSyllabusTree)
-
-// GET /api/syllabus/:classroomId/gap-analysis — member access
-router.get('/:classroomId/gap-analysis', requireClassroomMember, getGapAnalysis)
-
-// POST /api/syllabus/:classroomId/nodes — professor only
-router.post('/:classroomId/nodes', requireClassroomMember, requireProfessor, addNode)
-
-// PUT /api/syllabus/nodes/:nodeId — professor only
-router.put('/nodes/:nodeId', requireProfessor, updateNode)
-
-// DELETE /api/syllabus/nodes/:nodeId — professor only
-router.delete('/nodes/:nodeId', requireProfessor, deleteNode)
-
-export default router
+module.exports = router;

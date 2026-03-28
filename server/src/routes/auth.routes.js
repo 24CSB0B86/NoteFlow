@@ -1,28 +1,13 @@
-import { Router } from 'express'
-import { authenticate } from '../middleware/auth.js'
-import {
-  syncUserProfile,
-  getMe,
-  updateMe,
-  logout,
-} from '../controllers/auth.controller.js'
+const express = require('express');
+const router = express.Router();
+const { signup, login, me, logout, resetPassword, verifyEmail } = require('../controllers/auth.controller');
+const { authenticate } = require('../middleware/auth.middleware');
 
-const router = Router()
+router.post('/signup', signup);
+router.post('/login', login);
+router.post('/verify-email', verifyEmail);
+router.post('/reset-password', resetPassword);
+router.get('/me', authenticate, me);
+router.post('/logout', authenticate, logout);
 
-// POST /api/auth/signup
-// Public — syncs user profile to Neon DB after Supabase signup
-router.post('/signup', syncUserProfile)
-
-// GET /api/auth/me
-// Protected — returns current user's profile
-router.get('/me', authenticate, getMe)
-
-// PUT /api/auth/me
-// Protected — update profile fields
-router.put('/me', authenticate, updateMe)
-
-// POST /api/auth/logout
-// Protected — server-side sign out
-router.post('/logout', authenticate, logout)
-
-export default router
+module.exports = router;
