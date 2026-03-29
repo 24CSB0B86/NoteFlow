@@ -1,12 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { BookOpen, LayoutDashboard, Users, LogOut, GraduationCap } from 'lucide-react'
+import KarmaWidget from './karma/KarmaWidget'
+import { BookOpen, LayoutDashboard, LogOut, GraduationCap, Trophy, BarChart2, User } from 'lucide-react'
 import { cn } from '../lib/utils'
-
-const navLinks = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/classrooms', icon: BookOpen, label: 'My Classrooms' },
-]
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
@@ -16,6 +12,14 @@ export default function Layout({ children }) {
     await logout()
     navigate('/login')
   }
+
+  const isProfessor = user?.role === 'professor'
+
+  const navLinks = [
+    { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/classrooms', icon: BookOpen,         label: 'My Classrooms' },
+    { to: `/profile/${user?.id}`, icon: User, label: 'My Profile' },
+  ]
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -35,7 +39,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navLinks.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -53,11 +57,38 @@ export default function Layout({ children }) {
               {label}
             </NavLink>
           ))}
+
+          {/* Divider */}
+          <div className="h-px bg-border/50 my-2" />
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Features</p>
+
+          {/* Bounty Board — shown inside classroom context via link from classroom page */}
+          <div className="px-3 py-2 text-xs text-muted-foreground/60 italic">
+            🏹 Bounty Board available inside each classroom
+          </div>
+
+          {/* Professor Dashboard shortcut */}
+          {isProfessor && (
+            <NavLink
+              to="#"
+              onClick={e => { e.preventDefault() }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+            >
+              <BarChart2 className="w-4 h-4" />
+              Analytics Dashboard
+              <span className="ml-auto text-[10px] opacity-60">per-classroom</span>
+            </NavLink>
+          )}
         </nav>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-3 px-2">
+        {/* Karma Widget + User Info */}
+        <div className="p-4 border-t border-border space-y-3">
+          {/* Karma inline */}
+          <div className="flex justify-center">
+            <KarmaWidget />
+          </div>
+
+          <div className="flex items-center gap-3 px-2">
             <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
               {user?.full_name?.[0]?.toUpperCase() || 'U'}
             </div>

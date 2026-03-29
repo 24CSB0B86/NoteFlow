@@ -10,6 +10,9 @@ import DashboardPage from './pages/DashboardPage'
 import ClassroomsPage from './pages/ClassroomsPage'
 import ClassroomDetailPage from './pages/ClassroomDetailPage'
 import ResourceViewerPage from './pages/ResourceViewerPage'
+import BountyBoardPage from './pages/BountyBoardPage'
+import UserProfilePage from './pages/UserProfilePage'
+import ProfessorDashboardPage from './pages/ProfessorDashboardPage'
 
 export default function App() {
   return (
@@ -28,6 +31,16 @@ export default function App() {
               <Route path="/classrooms" element={<ProtectedRoute><ClassroomsPage /></ProtectedRoute>} />
               <Route path="/classrooms/:id" element={<ProtectedRoute><ClassroomDetailPage /></ProtectedRoute>} />
               <Route path="/classrooms/:classroomId/resources/:resourceId/view" element={<ProtectedRoute><ResourceViewerPage /></ProtectedRoute>} />
+
+              {/* Phase 5: Bounty Board */}
+              <Route path="/classrooms/:classroomId/bounties" element={<ProtectedRoute><BountyBoardPage /></ProtectedRoute>} />
+
+              {/* Phase 5: User Profile / Karma */}
+              <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+
+              {/* Phase 6: Professor Dashboard */}
+              <Route path="/classrooms/:classroomId/professor" element={<ProtectedRoute><ProfessorDashboardPage /></ProtectedRoute>} />
 
               {/* Redirects */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

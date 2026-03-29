@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import ResourceList from '../components/resources/ResourceList'
 import {
   Users, ChevronRight, ChevronDown, Plus, Trash2,
-  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen
+  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen, Trophy, GraduationCap
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
@@ -317,6 +317,18 @@ export default function ClassroomDetailPage() {
               <p className="text-xs text-muted-foreground mb-0.5">Invite Code</p>
               <p className="font-mono font-bold text-primary text-lg tracking-widest">{currentClassroom?.invite_code}</p>
             </div>
+          )}
+        </div>
+
+        {/* Quick action buttons */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/classrooms/${id}/bounties`)}>
+            <Trophy className="w-4 h-4 text-amber-400" /> Bounty Board
+          </Button>
+          {isProfessor && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/classrooms/${id}/professor`)}>
+              <GraduationCap className="w-4 h-4 text-primary" /> Analytics Dashboard
+            </Button>
           )}
         </div>
 

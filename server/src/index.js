@@ -10,6 +10,11 @@ const syllabusRoutes = require('./routes/syllabus.routes');
 const resourceRoutes = require('./routes/resource.routes');
 const highlightRoutes = require('./routes/highlight.routes');
 const discussionRoutes = require('./routes/discussion.routes');
+const karmaRoutes = require('./routes/karma.routes');
+const bountyRoutes = require('./routes/bounty.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
+const verifyRoutes = require('./routes/verify.routes');
+const moderateRoutes = require('./routes/moderate.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,21 +22,23 @@ const PORT = process.env.PORT || 3001;
 // ── Security & Parsing Middleware ──────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5173'
+  ],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Request/Response Logger (always print to terminal as required) ─────────────
-app.use(morgan((tokens, req, res) => {
-  const status = tokens.status(req, res);
-  const method = tokens.method(req, res);
-  const url = tokens.url(req, res);
-  const time = tokens['response-time'](req, res);
-  const statusEmoji = status >= 500 ? '❌' : status >= 400 ? '⚠️ ' : '✅';
-  return `${statusEmoji}  ${method} ${url} → ${status} [${time}ms]`;
-}));
+app.use((req, res, next) => {
+  console.log(`[API CALL ⚡] ${req.method} ${req.url}`);
+  next();
+});
+app.use(morgan('dev'));
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
@@ -40,6 +47,11 @@ app.use('/api/syllabus', syllabusRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/highlights', highlightRoutes);
 app.use('/api/discussions', discussionRoutes);
+app.use('/api/karma', karmaRoutes);
+app.use('/api/bounties', bountyRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/verify', verifyRoutes);
+app.use('/api/moderate', moderateRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

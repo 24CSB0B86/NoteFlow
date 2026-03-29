@@ -5,6 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const { supabaseAdmin } = require('../config/supabase');
 const { query } = require('../config/db');
 const { enqueueJob, getJobStatus: _getJobStatus } = require('../services/fileProcessor');
+const { awardKarma } = require('../services/karmaEngine');
+const analyticsCtrl = require('./analytics.controller');
 
 // ── Allowed file types ────────────────────────────────────────────────────────
 const ALLOWED_TYPES = {
@@ -48,7 +50,10 @@ const uploadResource = [
       if (!file) return res.status(400).json({ error: 'No file provided' });
 
       const { syllabus_node_id, classroom_id, doc_type, year, tags, description } = req.body;
+      console.log(`[Resource] POST /upload – file: "${file?.originalname}" size: ${file?.size} classroom: ${classroom_id} user: ${req.user.id}`);
+
       if (!syllabus_node_id || !classroom_id) {
+        console.warn('[Resource] Upload rejected – missing syllabus_node_id or classroom_id');
         return res.status(400).json({ error: 'syllabus_node_id and classroom_id are required' });
       }
 
@@ -146,6 +151,12 @@ const uploadResource = [
       const jobId = uuidv4();
       enqueueJob(jobId, finalResourceId, file.buffer, file.mimetype, file.originalname);
 
+      // Award karma for upload (non-blocking)
+      awardKarma(req.user.id, 'upload', finalResourceId, `Uploaded "${file.originalname}"`).catch(() => {});
+      // Track analytics event (non-blocking)
+      analyticsCtrl.trackEvent(classroom_id, req.user.id, 'upload', finalResourceId);
+
+      console.log(`[Resource] ✅ Upload complete – resourceId: ${finalResourceId} version: ${versionNumber} jobId: ${jobId}`);
       res.status(201).json({
         success: true,
         resourceId: finalResourceId,
@@ -154,7 +165,7 @@ const uploadResource = [
         message: versionNumber > 1 ? `Version ${versionNumber} uploaded` : 'File uploaded successfully',
       });
     } catch (err) {
-      console.error('Upload error:', err.message);
+      console.error('[Resource] ❌ Upload error:', err.message);
       res.status(500).json({ error: err.message });
     }
   },
@@ -167,7 +178,7 @@ const getResources = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const { doc_type, year, search, sort = 'newest' } = req.query;
-
+    console.log(`[Resource] GET /node/${nodeId} – sort: ${sort} doc_type: ${doc_type} search: "${search}"`);
     let whereClause = 'r.syllabus_node_id = $1';
     const params = [nodeId];
     let paramIdx = 2;
@@ -219,9 +230,10 @@ const getResources = async (req, res) => {
       return { ...row, thumbnailUrl };
     }));
 
+    console.log(`[Resource] ✅ getResources – returned ${resources.length} resources for node ${nodeId}`);
     res.json({ resources });
   } catch (err) {
-    console.error('getResources error:', err.message);
+    console.error('[Resource] ❌ getResources error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -289,6 +301,7 @@ const rollbackVersion = async (req, res) => {
 const deleteResource = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[Resource] DELETE /${id} – by user: ${req.user.id} role: ${req.user.role}`);
     const resource = await query(
       `SELECT * FROM resources WHERE id = $1`, [id]
     );
@@ -311,9 +324,10 @@ const deleteResource = async (req, res) => {
 
     // Delete DB record (cascades to versions, metadata)
     await query(`DELETE FROM resources WHERE id = $1`, [id]);
-
+    console.log(`[Resource] ✅ Deleted resource ${id}`);
     res.json({ success: true });
   } catch (err) {
+    console.error('[Resource] ❌ deleteResource error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -335,12 +349,15 @@ const downloadResource = async (req, res) => {
 
     const filePath = result.rows[0].file_path || result.rows[0].file_url;
     const signedUrl = await _getSignedUrl('resources', filePath, 300); // 5 min
+    console.log(`[Resource] ✅ Download URL generated for resource ${id}`);
 
-    // Increment download count
+    // Increment download count and track event
     await query(`UPDATE resources SET download_count = download_count + 1 WHERE id = $1`, [id]);
+    await analyticsCtrl.trackEvent(result.rows[0].classroom_id, req.user?.id, 'download', id);
 
     res.json({ url: signedUrl, fileName: result.rows[0].file_name });
   } catch (err) {
+    console.error('[Resource] ❌ downloadResource error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -364,6 +381,13 @@ const getPreview = async (req, res) => {
     const bucket = preview_path ? 'previews' : 'resources';
     const path = preview_path || file_path;
     const signedUrl = await _getSignedUrl(bucket, path, 3600);
+
+    // Increment view_count + track event
+    await query(`UPDATE resources SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1`, [id]).catch(() => {});
+    const classRes = await query(`SELECT classroom_id FROM resources WHERE id = $1`, [id]).catch(() => null);
+    if (classRes?.rows[0]) {
+      analyticsCtrl.trackEvent(classRes.rows[0].classroom_id, req.user?.id, 'view', id);
+    }
 
     res.json({ url: signedUrl, fileType: file_type });
   } catch (err) {
