@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import ResourceList from '../components/resources/ResourceList'
 import {
   Users, ChevronRight, ChevronDown, Plus, Trash2,
-  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen, Trophy, GraduationCap
+  FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen, Trophy, GraduationCap, BookOpen
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
@@ -324,6 +324,9 @@ export default function ClassroomDetailPage() {
         <div className="flex items-center gap-2 mb-6 flex-wrap">
           <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/classrooms/${id}/bounties`)}>
             <Trophy className="w-4 h-4 text-amber-400" /> Bounty Board
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/classrooms/${id}/exam`)}>
+            <BookOpen className="w-4 h-4 text-emerald-400" /> Exam Section
           </Button>
           {isProfessor && (
             <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/classrooms/${id}/professor`)}>

@@ -1,0 +1,42 @@
+services:
+  # ── NoteFlow Backend (Express API) ──────────────────────────────────────────
+  - type: web
+    name: noteflow-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false          # Set in Render dashboard — paste Neon DB URL
+      - key: SUPABASE_URL
+        sync: false          # Set in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false          # Set in Render dashboard (secret)
+      - key: JWT_SECRET
+        sync: false          # Set in Render dashboard (secret, min 32 chars)
+      - key: CLIENT_URL
+        sync: false          # Your Vercel frontend URL e.g. https://noteflow.vercel.app
+      - key: OPENAI_API_KEY
+        sync: false          # Optional — leave blank to use FAQ fallback
+      - key: OPENAI_MODEL
+        value: gpt-3.5-turbo
+      - key: OPENAI_MAX_TOKENS
+        value: "500"
+      - key: GMAIL_USER
+        sync: false          # Optional — for email notifications
+      - key: GMAIL_APP_PASS
+        sync: false          # Optional — Gmail App Password
+      - key: EMAIL_FROM
+        sync: false          # Optional
+      - key: REDIS_URL
+        sync: false          # Optional — Upstash Redis URL
+      - key: SENTRY_DSN
+        sync: false          # Optional — Sentry error tracking DSN

@@ -1,7 +1,8 @@
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import KarmaWidget from './karma/KarmaWidget'
-import { BookOpen, LayoutDashboard, LogOut, GraduationCap, Trophy, BarChart2, User } from 'lucide-react'
+import ChatWidget from './chat/ChatWidget'
+import { BookOpen, LayoutDashboard, LogOut, GraduationCap, BarChart2, User } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 export default function Layout({ children }) {
@@ -111,6 +112,9 @@ export default function Layout({ children }) {
       <main className="flex-1 ml-64 min-h-screen">
         {children}
       </main>
+
+      {/* Phase 7: AI Chat Widget — floats bottom-right on all pages */}
+      <ChatWidget />
     </div>
   )
 }

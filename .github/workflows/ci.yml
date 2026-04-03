@@ -1,0 +1,140 @@
+name: NoteFlow CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Server Tests
+  # ────────────────────────────────────────────────────────────────────────────
+  server-test:
+    name: 🧪 Server Tests (Jest + Supertest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+
+      - name: Run server tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-jwt-secret-minimum-32-chars
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-key
+          OPENAI_API_KEY: ''   # Use FAQ fallback in tests
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Client Tests
+  # ────────────────────────────────────────────────────────────────────────────
+  client-test:
+    name: 🧪 Client Tests (Vitest + RTL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci
+
+      - name: Run client tests
+        run: npm test
+        env:
+          VITE_API_URL: http://localhost:3001
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 3: Client Build Verification
+  # ────────────────────────────────────────────────────────────────────────────
+  client-build:
+    name: 🏗️ Client Build Verification
+    runs-on: ubuntu-latest
+    needs: [client-test]
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_API_URL: https://your-render-service.onrender.com
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist/
+          retention-days: 7
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 4: Lint
+  # ────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: 🔍 ESLint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true   # Don't block PRs on lint warnings

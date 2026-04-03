@@ -79,12 +79,15 @@ const uploadResource = [
       const resourceId = uuidv4();
       const filePath = `resources/${classroom_id}/${syllabus_node_id}/${resourceId}.${typeInfo.ext}`;
 
+      // Convert Multer Buffer to Uint8Array for Supabase fetch compat
+      const fileData = new Uint8Array(file.buffer);
+      
       // Upload to Supabase Storage
       const { error: uploadError } = await supabaseAdmin.storage
         .from('resources')
-        .upload(filePath, file.buffer, {
+        .upload(filePath, fileData, {
           contentType: file.mimetype,
-          upsert: false,
+          upsert: true,
         });
       if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
 
@@ -339,7 +342,7 @@ const downloadResource = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await query(
-      `SELECT r.file_url, r.file_name, fv.file_path
+      `SELECT r.file_url, r.file_name, r.classroom_id, fv.file_path
        FROM resources r
        LEFT JOIN file_versions fv ON fv.resource_id = r.id AND fv.is_current = TRUE
        WHERE r.id = $1`,

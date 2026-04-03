@@ -28,4 +28,18 @@ export default defineConfig({
   worker: {
     format: 'es',
   },
+  // ── Vitest configuration ───────────────────────────────────────────────────
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./vitest.setup.js'],
+    include: ['src/__tests__/**/*.{test,spec}.{js,jsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/__tests__/**', 'src/main.jsx'],
+    },
+  },
 })
+

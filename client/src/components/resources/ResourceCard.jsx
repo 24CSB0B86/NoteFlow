@@ -62,13 +62,23 @@ export default function ResourceCard({ resource, onView, onVersionHistory }) {
     } finally { setDownloading(false) }
   }
 
+  const handleView = async (e) => {
+    // Only for PDF files opening the in-browser viewer
+    if (resource.file_type?.includes('pdf') && !isProcessing) {
+      onView?.(resource)
+    } else if (!isProcessing) {
+      // For non-PDFs, trigger download instead
+      await handleDownload(e)
+    }
+  }
+
   return (
     <div
       className={cn(
         'group relative rounded-xl border border-border/50 bg-card/60 hover:bg-card hover:border-primary/30',
         'hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 cursor-pointer overflow-hidden',
       )}
-      onClick={() => !isProcessing && resource.file_type?.includes('pdf') && onView?.(resource)}
+      onClick={handleView}
     >
       {/* Thumbnail area */}
       <div className="relative h-40 bg-gradient-to-br from-muted/50 to-muted/20 overflow-hidden">
@@ -104,11 +114,11 @@ export default function ResourceCard({ resource, onView, onVersionHistory }) {
           )}
         </div>
 
-        {/* View overlay (PDF only) */}
-        {resource.file_type?.includes('pdf') && !isProcessing && (
+        {/* View overlay (PDF) or Download overlay (other types) */}
+        {!isProcessing && (
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
             <div className="bg-white/10 backdrop-blur rounded-full p-3 text-white">
-              <Eye className="w-5 h-5" />
+              {resource.file_type?.includes('pdf') ? <Eye className="w-5 h-5" /> : <Download className="w-5 h-5" />}
             </div>
           </div>
         )}
