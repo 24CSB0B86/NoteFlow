@@ -11,48 +11,30 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Split SQL into individual statements, ignoring comments and empty lines
 function splitStatements(sql) {
-  // Remove block comments
-  sql = sql.replace(/\/\*[\s\S]*?\*\//g, '');
-  // Split on semicolons
-  return sql
-    .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith('--'));
+  return [sql]; // completely ignore splitting
 }
 
 async function runFile(file) {
   const sql = fs.readFileSync(path.join(__dirname, 'migrations', file), 'utf8');
-  const statements = splitStatements(sql);
   const client = await pool.connect();
-  let ok = 0, errors = 0;
 
   console.log(`\n╔════════════════════════════════════════╗`);
   console.log(`║  Running: ${file.padEnd(30)}║`);
   console.log(`╚════════════════════════════════════════╝`);
 
   try {
-    for (const stmt of statements) {
-      try {
-        await client.query(stmt);
-        ok++;
-        // Print first 60 chars of statement for visibility
-        const preview = stmt.replace(/\s+/g, ' ').slice(0, 70);
-        console.log(`  ✅  ${preview}…`);
-      } catch (err) {
-        errors++;
-        const preview = stmt.replace(/\s+/g, ' ').slice(0, 70);
-        console.log(`  ⚠️   ${preview}…`);
-        console.log(`       └─ ${err.message.split('\n')[0]}`);
-      }
-    }
+    // Run the entire SQL file at once so Postgres can handle functions and triggers correctly
+    await client.query(sql);
+    console.log(`  ✅  Successfully executed ${file}`);
+    return { ok: 1, errors: 0 };
+  } catch (err) {
+    console.log(`  ❌  Failed to execute ${file}`);
+    console.log(`       └─ ${err.message}`);
+    return { ok: 0, errors: 1 };
   } finally {
     client.release();
   }
-
-  console.log(`\n  Result: ${ok} ok, ${errors} skipped/warnings out of ${statements.length} statements\n`);
-  return { ok, errors };
 }
 
 (async () => {
@@ -64,11 +46,20 @@ async function runFile(file) {
     console.log(`   DB: ${res.rows[0].current_database}  |  User: ${res.rows[0].current_user}`);
     testClient.release();
 
-    const r1 = await runFile('005_bounty_karma.sql');
-    const r2 = await runFile('006_analytics_moderation.sql');
+    // Read all SQL files in the migrations directory and sort them alphabetically
+    const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations'))
+      .filter(f => f.endsWith('.sql'))
+      .sort();
 
-    const totalOk = r1.ok + r2.ok;
-    const totalErr = r1.errors + r2.errors;
+    let totalOk = 0;
+    let totalErr = 0;
+
+    for (const file of migrationFiles) {
+      const result = await runFile(file);
+      totalOk += result.ok;
+      totalErr += result.errors;
+    }
+
     console.log('═'.repeat(50));
     console.log(`🎉 DONE — ${totalOk} statements ran, ${totalErr} warnings (likely already exists)\n`);
   } catch (e) {

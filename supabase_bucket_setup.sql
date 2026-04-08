@@ -1,34 +1,81 @@
--- Run this in your Supabase Dashboard -> SQL Editor
--- This sets up the storage buckets and RLS policies for NoteFlow file management
+-- ============================================================
+-- NoteFlow Storage RLS Fix
+-- Run this in Supabase Dashboard → SQL Editor
+-- ============================================================
 
--- 1. Create buckets
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values 
-  ('resources', 'resources', false, 104857600, array['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4']),
-  ('thumbnails', 'thumbnails', false, 10485760, array['image/png', 'image/jpeg', 'image/webp']),
-  ('previews', 'previews', false, 52428800, array['application/pdf'])
-on conflict (id) do nothing;
+-- Drop the old restrictive upload policy for resources bucket
+DROP POLICY IF EXISTS "Authenticated users can upload resources" ON storage.objects;
 
--- 2. Set up RLS for resources bucket
-create policy "Authenticated users can upload resources" on storage.objects
-  for insert with check ( bucket_id = 'resources' and auth.role() = 'authenticated' );
+-- Create new policy that allows BOTH authenticated users AND service_role
+CREATE POLICY "Allow uploads to resources bucket"
+  ON storage.objects
+  FOR INSERT
+  WITH CHECK (
+    bucket_id = 'resources'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );
 
-create policy "Authenticated users can read resources" on storage.objects
-  for select using ( bucket_id = 'resources' and auth.role() = 'authenticated' );
+-- Also fix the read policy to allow service_role reads (for signed URLs)
+DROP POLICY IF EXISTS "Authenticated users can read resources" ON storage.objects;
 
-create policy "Service role can delete resources" on storage.objects
-  for delete using ( bucket_id = 'resources' and auth.role() = 'service_role' );
+CREATE POLICY "Allow reads from resources bucket"
+  ON storage.objects
+  FOR SELECT
+  USING (
+    bucket_id = 'resources'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );
 
--- 3. Set up RLS for thumbnails bucket
-create policy "Authenticated users can read thumbnails" on storage.objects
-  for select using ( bucket_id = 'thumbnails' and auth.role() = 'authenticated' );
+-- Fix update policy for resources (needed for upsert)
+DROP POLICY IF EXISTS "Allow updates to resources bucket" ON storage.objects;
 
-create policy "Service role can manage thumbnails" on storage.objects
-  for all using ( bucket_id = 'thumbnails' and auth.role() = 'service_role' );
+CREATE POLICY "Allow updates to resources bucket"
+  ON storage.objects
+  FOR UPDATE
+  USING (
+    bucket_id = 'resources'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );
 
--- 4. Set up RLS for previews bucket
-create policy "Authenticated users can read previews" on storage.objects
-  for select using ( bucket_id = 'previews' and auth.role() = 'authenticated' );
+-- Fix delete policy
+DROP POLICY IF EXISTS "Service role can delete resources" ON storage.objects;
 
-create policy "Service role can manage previews" on storage.objects
-  for all using ( bucket_id = 'previews' and auth.role() = 'service_role' );
+CREATE POLICY "Allow deletes from resources bucket"
+  ON storage.objects
+  FOR DELETE
+  USING (
+    bucket_id = 'resources'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );
+
+-- Fix thumbnails bucket (service_role needs full access for background processing)
+DROP POLICY IF EXISTS "Service role can manage thumbnails" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can read thumbnails" ON storage.objects;
+
+CREATE POLICY "Allow all on thumbnails bucket"
+  ON storage.objects
+  FOR ALL
+  USING (
+    bucket_id = 'thumbnails'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  )
+  WITH CHECK (
+    bucket_id = 'thumbnails'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );
+
+-- Fix previews bucket
+DROP POLICY IF EXISTS "Service role can manage previews" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can read previews" ON storage.objects;
+
+CREATE POLICY "Allow all on previews bucket"
+  ON storage.objects
+  FOR ALL
+  USING (
+    bucket_id = 'previews'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  )
+  WITH CHECK (
+    bucket_id = 'previews'
+    AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
+  );

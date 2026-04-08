@@ -1,0 +1,484 @@
+Use Cases
+for
+NoteFlow,
+Release 1.0
+Version 1.0 approved
+Prepared by
+24CSB0B84
+24CSB0B85
+24CSB0B86
+Computer Science Department
+January 2026
+Copyright©2026 by 24CSB0B84, 24CSB0B85, 24CSB0B86. All Rights Reserved.
+Revision History
+Name Date Reason For Changes Version
+Team27 January 2026 Initial document creation 1.0
+1
+Use Case 1.0
+Use Case ID: 1.0
+Use Case Name: Create Private Classroom
+Created By: Team27
+Last Updated By: Team27
+Date Created: January 15, 2026
+Date Last Updated: January 15, 2026
+Actors: Professor
+Description: A professor creates a new private classroom for a course, which gen-
+erates a unique 6-digit invite code that students can use to join the
+classroom. The classroom serves as a secure space for sharing course
+materials and resources.
+Preconditions: 1. Professor has successfully logged into the NoteFlow platform.
+2. Professor’s university email has been verified.
+3. Professor has been assigned the ”Professor” role in the system.
+Postconditions: 1. A new private classroom is created in the database.
+2. A unique 6-digit invite code is generated and associated with
+the classroom.
+3. The professor is set as the classroom owner with full permissions.
+4. The classroom appears in the professor’s dashboard.
+Normal Flow: 1. Professor clicks on ”Create Classroom” button on the dashboard.
+2. System displays the classroom creation form.
+3. Professor enters classroom details (course name, course code,
+semester, description).
+4. Professor clicks ”Create” button.
+5. System validates the input data.
+6. System creates the classroom in the database.
+7. System generates a unique 6-digit invite code.
+8. System displays success message with the invite code.
+9. System redirects professor to the newly created classroom dash-
+board.
+Alternative Flows: 1.0.AC.1: Professor cancels creation
+1. At step 3, professor clicks ”Cancel” button.
+2. System discards entered data and returns to main dash-
+board.
+1.0.AC.2: Professor wants to copy invite code
+1. At step 8, professor clicks ”Copy Code” button.
+2. System copies the invite code to clipboard.
+3. System displays ”Code copied” confirmation message.
+2
+Exceptions: 1.0.EX.1: Invalid input data
+1. At step 5, system detects missing or invalid required fields.
+2. System displays error message indicating which fields need correc-
+tion.
+3. System returns to step 3.
+1.0.EX.2: Database error
+1. At step 6, system fails to create classroom due to database error.
+2. System logs the error.
+3. System displays ”Unable to create classroom. Please try again.”
+message.
+4. Use case terminates.
+Includes: None
+Priority: High
+Frequency of Use: 2-3 times per semester per professor
+Business Rules: 1. Only users with ”Professor” role can create classrooms.
+2. Invite codes must be exactly 6 digits.
+3. Invite codes must be unique across the entire platform.
+4. Classroom names must be unique within a professor’s account.
+Special Requirements: 1. Invite code generation must ensure uniqueness through
+database constraint checking.
+2. Response time for classroom creation should be under
+2 seconds.
+Assumptions: 1. Professor has administrative rights over the classroom once cre-
+ated.
+2. The 6-digit invite code provides sufficient uniqueness for the ex-
+pected number of classrooms.
+Notes and Issues: None
+3
+Use Case 2.0
+Use Case ID: 2.0
+Use Case Name: Upload File with Metadata Tagging
+Created By: Team27
+Last Updated By: Team27
+Date Created: January 16, 2026
+Date Last Updated: January 16, 2026
+Actors: Professor, Harshitha
+Description: A user uploads an educational file (PDF, document, presentation) to
+a classroom and tags it with relevant metadata to organize it within
+the syllabus tree structure. The system processes the file by generat-
+ing thumbnails, scanning for viruses, and compressing it for optimal
+storage.
+Preconditions: 1. User is logged into the NoteFlow platform.
+2. User is a member of the classroom.
+3. User has upload permissions in the classroom.
+4. Syllabus tree structure exists for the classroom.
+Postconditions: 1. File is uploaded to cloud storage (S3/Azure).
+2. File metadata is saved in the database.
+3. File thumbnail is generated and stored.
+4. File is tagged and linked to syllabus topic.
+5. File appears in the classroom’s file listing.
+6. User earns karma points for the contribution.
+Normal Flow: 1. User navigates to desired classroom.
+2. User clicks ”Upload File” button.
+3. System displays upload modal with drag-and-drop area.
+4. User selects file or drags file into the upload area.
+5. System validates file type and size.
+6. System displays metadata tagging form.
+7. User enters file metadata (title, description, tags).
+8. User selects associated syllabus unit and topic.
+9. User clicks ”Upload” button.
+10. System displays upload progress indicator.
+11. System uploads file to cloud storage.
+12. System performs virus scanning on the file.
+13. System generates thumbnail preview.
+14. System compresses file for storage optimization.
+15. System saves file metadata to database.
+16. System awards karma points to the user.
+17. System displays success message.
+18. System updates the file listing and syllabus tree.
+4
+Alternative Flows: 2.0.AC.1: Multiple file upload
+1. At step 4, user selects multiple files.
+2. System processes each file sequentially following steps 5-18.
+2.0.AC.2: User cancels upload
+1. At any step before step 11, user clicks ”Cancel” button.
+2. System discards the upload and returns to classroom view.
+Exceptions: 2.0.EX.1: Invalid file type
+1. At step 5, system detects unsupported file type.
+2. System displays ”File type not supported” error message.
+3. System returns to step 4.
+2.0.EX.2: File size exceeds limit
+1. At step 5, system detects file larger than 100MB.
+2. System displays ”File too large. Maximum size is 100MB” error.
+3. System returns to step 4.
+2.0.EX.3: Virus detected
+1. At step 12, system detects malware in the file.
+2. System deletes the uploaded file.
+3. System displays ”File contains malware and has been rejected”
+message.
+4. Use case terminates.
+2.0.EX.4: Upload interrupted
+1. During step 11, network connection is lost.
+2. System pauses upload and displays ”Connection lost. Retrying...”
+message.
+3. System attempts to resume upload when connection is restored.
+4. If retry fails after 3 attempts, system displays error and terminates.
+Includes: None
+Priority: High
+Frequency of Use: 50-100 times per classroom per semester
+Business Rules: 1. Supported file types: PDF, DOCX, PPTX, TXT.
+2. Maximum file size: 100MB.
+3. All files must pass virus scanning.
+4. Users earn 10 karma points per successful upload.
+5. Files uploaded by professors receive verification badge.
+Special Requirements: 1. Upload progress must be displayed in real-time.
+2. File processing (virus scan, compression, thumbnail)
+must complete within 30 seconds.
+3. System must support resumable uploads for files larger
+than 10MB.
+5
+Assumptions: 1. Users have stable internet connection for uploading.
+2. Cloud storage has sufficient capacity.
+3. Virus scanning service is available and operational.
+Notes and Issues: Consider implementing background processing for large files to
+improve user experience.
+6
+Use Case 3.0
+Use Case ID: 3.0
+Use Case Name: View Collaborative Heatmap on Document
+Created By: Team27
+Last Updated By: Team27
+Date Created: January 17, 2026
+Date Last Updated: January 17, 2026
+Actors: Professor, Yajat
+Description: A user views a PDF document in the in-browser viewer and sees a
+heatmap overlay that visualizes areas of the document that have been
+highlighted by multiple users. The heatmap uses color gradients to
+indicate the intensity of collective interest, helping users identify im-
+portant sections.
+Preconditions: 1. User is logged into the NoteFlow platform.
+2. User is a member of the classroom.
+3. At least one PDF document exists in the classroom.
+4. At least one user has highlighted text in the document.
+Postconditions: 1. User has viewed the document with heatmap overlay.
+2. User can identify popular sections of the document.
+3. System logs the document view for analytics.
+Normal Flow: 1. User navigates to classroom file listing.
+2. User clicks on a PDF document to view.
+3. System opens the in-browser PDF viewer.
+4. System loads the document using lazy loading for pages.
+5. User clicks ”Show Heatmap” toggle button.
+6. System retrieves aggregated highlight data from the database.
+7. System calculates heatmap intensity based on highlight density.
+8. System renders heatmap overlay on the document.
+9. System displays gradient colors (light to dark) indicating low to
+high interest.
+10. User hovers over a highlighted area.
+11. System displays tooltip showing number of highlights and users.
+12. User navigates through document pages.
+13. System updates heatmap for each page.
+7
+Alternative Flows: 3.0.AC.1: Toggle heatmap off
+1. At any point after step 8, user clicks ”Hide Heatmap”
+toggle.
+2. System removes heatmap overlay from view.
+3. Document appears without heatmap visualization.
+3.0.AC.2: No highlights exist
+1. At step 6, system finds no highlight data for the document.
+2. System displays message ”No heatmap data available yet”.
+3. Document is displayed without heatmap overlay.
+3.0.AC.3: User adds own highlight
+1. At any point, user selects text and highlights it.
+2. System captures highlight coordinates.
+3. System updates heatmap aggregation.
+4. System refreshes heatmap overlay to include new data.
+Exceptions: 3.0.EX.1: Document fails to load
+1. At step 4, system fails to load the PDF document.
+2. System displays ”Unable to load document” error message.
+3. System logs the error for investigation.
+4. Use case terminates.
+3.0.EX.2: Heatmap data retrieval fails
+1. At step 6, database query for highlight data fails.
+2. System logs the error.
+3. System displays document without heatmap overlay.
+4. System shows ”Heatmap temporarily unavailable” notification.
+5. Use case continues from step 12.
+Includes: None
+Priority: High
+Frequency of Use: 200-500 times per classroom per semester
+Business Rules: 1. Heatmap intensity calculated based on number of overlapping
+highlights.
+2. Heatmap updates in near real-time (within 5 seconds of new
+highlights).
+3. Only highlights from classroom members are included in
+heatmap.
+4. Heatmap gradient: light yellow (1-5 highlights), orange (6-15),
+red (16+).
+8
+Special Requirements: 1. Heatmap rendering must not degrade PDF viewer per-
+formance.
+2. Heatmap overlay must be semi-transparent to not ob-
+scure text.
+3. Tooltip display response time must be under 200ms.
+4. System must handle documents with up to 1000 high-
+lights efficiently.
+Assumptions: 1. Browser supports HTML5 canvas for heatmap rendering.
+2. Highlight coordinate data is accurately captured and stored.
+3. Users understand heatmap visualization conventions.
+Notes and Issues: Consider implementing heatmap filtering options (e.g., show
+only professor highlights, time-based filtering).
+9
+Use Case 4.0
+Use Case ID: 4.0
+Use Case Name: Upload Exam Resources to Exam Section
+Created By: Team27
+Last Updated By: Team27
+Date Created: January 18, 2026
+Date Last Updated: January 18, 2026
+Actors: SangramReddy, Professor
+Description: Students upload exam preparation materials such as previous year
+question papers (PYQs), important questions, and quick revision notes
+to dedicated exam sections (Midterm or Endterm). Professors super-
+vise and approve these uploads to ensure quality and relevance.
+Preconditions: 1. User is logged into the NoteFlow platform.
+2. User is a member of the classroom.
+3. Professor has created exam sections (Midterm/Endterm).
+4. User has upload permissions.
+Postconditions: 1. Exam resource is uploaded to the appropriate exam section.
+2. Resource is marked as ”Pending Approval” (if student upload).
+3. Professor receives notification for review.
+4. Upon approval, resource becomes visible to all students.
+5. Student earns karma points for approved uploads.
+6. Resource appears in exam section listing.
+10
+Normal Flow: 1. Student navigates to the classroom’s exam section.
+2. Student selects exam type (Midterm or Endterm).
+3. Student clicks ”Upload Exam Resource” button.
+4. System displays upload form with resource type options.
+5. Student selects resource type (PYQ, Important Questions, Quick
+Revision).
+6. Student uploads the file (PDF/document).
+7. Student enters resource metadata (year, topic coverage, descrip-
+tion).
+8. Student clicks ”Submit for Approval” button.
+9. System validates file and metadata.
+10. System uploads file to cloud storage.
+11. System creates database entry with ”Pending Approval” status.
+12. System sends notification to professor.
+13. System displays ”Submitted for review” confirmation message.
+14. Professor receives notification and reviews the upload.
+15. Professor clicks ”Approve” button.
+16. System updates resource status to ”Approved”.
+17. System awards karma points to the student (15 points).
+18. System sends approval notification to student.
+19. Resource becomes visible in exam section to all students.
+Alternative Flows: 4.0.AC.1: Professor uploads directly
+1. At step 3, if actor is professor, system skips approval
+workflow.
+2. Resource is immediately marked as ”Approved” at step 11.
+3. Resource is instantly visible to all students.
+4. No approval notification is sent.
+4.0.AC.2: Professor rejects upload
+1. At step 15, professor clicks ”Reject” button instead of
+”Approve”.
+2. System prompts professor to enter rejection reason.
+3. Professor enters reason and confirms.
+4. System updates status to ”Rejected”.
+5. System sends rejection notification with reason to student.
+6. Resource is not made visible to other students.
+4.0.AC.3: Student edits before approval
+1. After step 13, student views pending uploads.
+2. Student clicks ”Edit” on pending resource.
+3. System allows student to update metadata or replace file.
+4. Student resubmits, returning to step 9.
+11
+Exceptions: 4.0.EX.1: Invalid file type
+1. At step 9, system detects unsupported file format.
+2. System displays ”Please upload PDF or document files only” error.
+3. System returns to step 6.
+4.0.EX.2: Missing required metadata
+1. At step 9, system detects incomplete metadata.
+2. System displays ”Please fill all required fields” error message.
+3. System highlights missing fields.
+4. System returns to step 7.
+4.0.EX.3: Upload fails
+1. At step 10, file upload to cloud storage fails.
+2. System logs the error.
+3. System displays ”Upload failed. Please try again” message.
+4. System returns to step 6.
+4.0.EX.4: Duplicate resource detected
+1. At step 9, system detects similar uploaded resource.
+2. System displays warning: ”Similar resource exists. Continue?”
+3. If student cancels, use case terminates.
+4. If student continues, proceed with step 10.
+Includes: None
+Priority: High
+Frequency of Use: 30-50 uploads per classroom before each exam (Midterm and
+Endterm)
+Business Rules: 1. Student uploads require professor approval before becoming
+visible.
+2. Professor uploads are auto-approved.
+3. Approved student uploads earn 15 karma points.
+4. Rejected uploads earn no karma points.
+5. Students can upload maximum 5 resources per exam section.
+6. Resources are categorized by type: PYQ, Important Questions,
+Quick Revision.
+7. Only PDF and document formats are accepted.
+Special Requirements: 1. Professor must review uploads within 48 hours.
+2. System must send reminder to professor if pending
+uploads exceed 10.
+3. Exam sections must be clearly separated
+(Midterm/Endterm tabs).
+4. Resources must be searchable by year, type, and topic.
+12
+Assumptions: 1. Students upload relevant and appropriate exam materials.
+2. Professors actively monitor and approve uploads.
+3. Uploaded PYQs do not violate copyright policies.
+4. Students understand different resource categories.
+Notes and Issues: Consider implementing auto-categorization using AI to detect
+resource type. Add version control for updated PYQs.
+13
+Use Case 5.0
+Use Case ID: 5.0
+Use Case Name: Take Revision Test
+Created By: Team27
+Last Updated By: Team27
+Date Created: January 18, 2026
+Date Last Updated: January 18, 2026
+Actors: Charana
+Description: Students take timed revision tests based on exam materials to assess
+their preparation level. The system presents questions, tracks time,
+evaluates answers, and provides immediate feedback with scores and
+explanations.
+Preconditions: 1. Student is logged into the NoteFlow platform.
+2. Student is a member of the classroom.
+3. At least one revision test is available in the exam section.
+4. Student has not exceeded daily test attempt limit (if applicable).
+Postconditions: 1. Test attempt is recorded in the database.
+2. Student receives score and detailed feedback.
+3. Test results are saved in student’s history.
+4. Student performance analytics are updated.
+5. Student earns karma points based on performance.
+14
+Normal Flow: 1. Student navigates to exam section (Midterm or Endterm).
+2. Student clicks on ”Revision Tests” tab.
+3. System displays list of available tests.
+4. Student selects a test to attempt.
+5. System displays test details (duration, questions count, topics
+covered).
+6. Student clicks ”Start Test” button.
+7. System displays test instructions and timer.
+8. Student clicks ”Begin” button.
+9. System starts countdown timer.
+10. System displays first question.
+11. Student reads question and selects answer.
+12. Student clicks ”Next” to move to next question.
+13. System saves the answer and displays next question.
+14. Steps 11-13 repeat for all questions.
+15. Student clicks ”Submit Test” button after answering all ques-
+tions.
+16. System prompts for submission confirmation.
+17. Student confirms submission.
+18. System stops timer and evaluates all answers.
+19. System calculates score and performance metrics.
+20. System displays results page with score, correct/incorrect break-
+down.
+21. System shows detailed feedback for each question.
+22. System awards karma points based on score (5-20 points).
+23. System saves test attempt in student’s history.
+15
+Alternative Flows: 5.0.AC.1: Student pauses test
+1. At any question, student clicks ”Pause” button.
+2. System pauses timer and saves current progress.
+3. System displays ”Test paused” message.
+4. Student can resume by clicking ”Resume Test” button.
+5. System resumes from paused question.
+5.0.AC.2: Student navigates between questions
+1. At any point during test, student clicks ”Previous” button.
+2. System displays previous question with saved answer.
+3. Student can modify answer.
+4. Student clicks ”Next” to continue forward.
+5.0.AC.3: Review answers before submission
+1. Before step 15, student clicks ”Review Answers” button.
+2. System displays summary of all questions with an-
+swered/unanswered status.
+3. Student can click on any question to navigate directly.
+4. After review, student proceeds to step 15.
+5.0.AC.4: Time expires
+1. During test, timer reaches zero.
+2. System automatically submits the test.
+3. System displays ”Time’s up! Test auto-submitted” message.
+4. Use case continues from step 18.
+Exceptions: 5.0.EX.1: Connection lost during test
+1. During test, student loses internet connection.
+2. System saves current progress locally.
+3. When connection is restored, system syncs saved answers.
+4. Student continues from last saved state.
+5.0.EX.2: Browser crash during test
+1. Student’s browser closes unexpectedly.
+2. When student reopens and logs in, system detects incomplete test.
+3. System prompts: ”You have an incomplete test. Resume?”
+4. If student chooses ”Yes”, test resumes from last saved state.
+5. If student chooses ”No”, test is marked as abandoned.
+5.0.EX.3: Student attempts to navigate away
+1. During test, student tries to navigate to another page.
+2. System displays warning: ”Test in progress. Are you sure you want
+to leave?”
+3. If student cancels, test continues.
+4. If student confirms, test is paused and saved.
+Includes: None
+Priority: High
+16
+Frequency of Use: 100-200 test attempts per classroom before each exam
+Business Rules: 1. Tests are timed with strict time limits.
+2. Students can attempt each test maximum 3 times.
+3. Best score is recorded for leaderboard.
+4. Karma points awarded: 20 points (90-100%), 15 points (75-
+89%), 10 points (60-74%), 5 points (¡60%).
+5. Students cannot view correct answers until test is submitted.
+6. Test questions are randomized to prevent cheating.
+7. Auto-submit occurs when time expires.
+Special Requirements: 1. Timer must be accurate and synchronized with server
+time.
+2. Auto-save answers every 30 seconds to prevent data
+loss.
+3. Test interface must prevent copy-paste and right-click.
+4. Results must be displayed within 2 seconds of submis-
+sion.
+5. System must handle 100+ concurrent test takers.
+6. Progress bar must show completion percentage.
+Assumptions: 1. Students have stable internet for test duration.
+2. Students take tests honestly without external help.
+3. Test questions are properly formatted with correct answers.
+4. Browser supports JavaScript for timer functionality.
+Notes and Issues: Consider implementing proctoring features to prevent cheat-
+ing. Add analytics dashboard for students to track performance
+trends across multiple tests.
+17
