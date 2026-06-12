@@ -28,7 +28,7 @@
     "pdf-lib": "^1.17.1",
     "pg": "^8.11.3",
     "sharp": "^0.34.5",
-    "uuid": "^13.0.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
@@ -37,7 +37,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/src/__tests__/jest.setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/__tests__/jest.setup.js"
+    ],
     "setupFiles": [
       "dotenv/config"
     ],
@@ -54,6 +56,9 @@
       "text",
       "lcov"
     ],
-    "testTimeout": 15000
+    "testTimeout": 15000,
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(openai|@supabase|nanoid)/)"
+    ]
   }
 }
