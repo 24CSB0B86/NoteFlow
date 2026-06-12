@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 // ── Mock the api module so no real HTTP calls are made ────────────────────────
-vi.mock('../../lib/api', () => ({
+vi.mock('../lib/api', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
@@ -12,8 +12,8 @@ vi.mock('../../lib/api', () => ({
   },
 }))
 
-import api from '../../lib/api'
-import ChatWidget from '../../components/chat/ChatWidget'
+import api from '../lib/api'
+import ChatWidget from '../components/chat/ChatWidget'
 
 // ── Helper: render with router context ───────────────────────────────────────
 function renderWidget() {

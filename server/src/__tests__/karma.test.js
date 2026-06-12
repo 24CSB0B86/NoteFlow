@@ -6,10 +6,10 @@
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
-jest.mock('../../config/db', () => ({ query: jest.fn() }));
+jest.mock('../config/db', () => ({ query: jest.fn() }));
 
-const { query } = require('../../config/db');
-const app = require('../../index');
+const { query } = require('../config/db');
+const app = require('../index');
 
 function makeToken(role = 'student') {
   return jwt.sign(

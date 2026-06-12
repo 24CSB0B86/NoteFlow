@@ -5,7 +5,7 @@
  * These tests are self-contained — no DB required.
  */
 const request = require('supertest');
-const app = require('../../index');
+const app = require('../index');
 
 describe('GET /api/health', () => {
   it('returns 200 with status ok', async () => {

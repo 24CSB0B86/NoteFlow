@@ -8,14 +8,14 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
 // ── Mock DB and AI service ─────────────────────────────────────────────────────
-jest.mock('../../config/db', () => ({ query: jest.fn() }));
-jest.mock('../../services/aiService', () => ({
+jest.mock('../config/db', () => ({ query: jest.fn() }));
+jest.mock('../services/aiService', () => ({
   getChatResponse: jest.fn().mockResolvedValue('This is a mocked AI response.'),
 }));
 
-const { query } = require('../../config/db');
-const { getChatResponse } = require('../../services/aiService');
-const app = require('../../index');
+const { query } = require('../config/db');
+const { getChatResponse } = require('../services/aiService');
+const app = require('../index');
 
 // ── Generate a valid JWT for test requests ────────────────────────────────────
 function makeToken(userId = 'user-test-001') {
@@ -184,7 +184,7 @@ describe('aiService fallback', () => {
   it('returns a rule-based answer when asked about karma', async () => {
     // Use real aiService (not mocked) to test FAQ rules
     jest.resetModules();
-    const { getChatResponse: getRealResponse } = require('../../services/aiService');
+    const { getChatResponse: getRealResponse } = require('../services/aiService');
     // Without OPENAI_API_KEY the service always uses rule-based
     const savedKey = process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_API_KEY;

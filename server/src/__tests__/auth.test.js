@@ -7,12 +7,12 @@
 const request = require('supertest');
 
 // ── Mock the DB module before requiring app ────────────────────────────────────
-jest.mock('../../config/db', () => ({
+jest.mock('../config/db', () => ({
   query: jest.fn(),
 }));
 
-const { query } = require('../../config/db');
-const app = require('../../index');
+const { query } = require('../config/db');
+const app = require('../index');
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const validSignup = {
