@@ -37,7 +37,7 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterFramework": [],
+    "setupFilesAfterEnv": ["<rootDir>/src/__tests__/jest.setup.js"],
     "setupFiles": [
       "dotenv/config"
     ],

@@ -35,8 +35,9 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
-          JWT_SECRET: ci-test-jwt-secret-minimum-32-chars
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          JWT_SECRET: ci-test-jwt-secret-minimum-32-chars-ok
+          # Use a dummy URL — DB is fully mocked in tests via jest.mock('../../config/db')
+          DATABASE_URL: postgresql://test:test@localhost/test_db
           SUPABASE_URL: https://placeholder.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: placeholder-key
           OPENAI_API_KEY: ''   # Use FAQ fallback in tests
@@ -100,7 +101,7 @@ jobs:
       - name: Build production bundle
         run: npm run build
         env:
-          VITE_API_URL: https://your-render-service.onrender.com
+          VITE_API_URL: https://noteflow-api.onrender.com
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
 
@@ -108,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: client-dist
-          path: client/dist/
+          path: client/dist/      # absolute path from repo root (not working-directory)
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────

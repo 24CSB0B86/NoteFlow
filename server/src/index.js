@@ -101,10 +101,13 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Internal server error', message: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 NoteFlow API running on http://localhost:${PORT}`);
-  console.log(`🤖 Chatbot: ${process.env.OPENAI_API_KEY ? 'OpenAI GPT-3.5-turbo' : 'Rule-based FAQ fallback'}`);
-  console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}\n`);
-});
+// Only start listening when run directly (not when require()'d by Jest tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 NoteFlow API running on http://localhost:${PORT}`);
+    console.log(`🤖 Chatbot: ${process.env.OPENAI_API_KEY ? 'OpenAI GPT-3.5-turbo' : 'Rule-based FAQ fallback'}`);
+    console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  });
+}
 
 module.exports = app;

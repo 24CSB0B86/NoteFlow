@@ -1,0 +1,2034 @@
+================================================================================
+                    NOTEFLOW — COMPLETE PROJECT DOCUMENTATION
+                         AI-Powered Collaborative Note-Sharing Platform
+                         For University Students and Professors
+                         Version 1.0 | January 2026
+                         Team 27 | 24CSB0B84, 24CSB0B85, 24CSB0B86
+                         Computer Science Department
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+ 1. Project Overview & Vision
+ 2. Team & Stakeholders
+ 3. Tech Stack (Full Breakdown)
+ 4. System Architecture
+ 5. Directory & File Structure
+ 6. Database Schema (All 15+ Tables)
+ 7. Backend — Server Details
+    7.1  Entry Point (index.js)
+    7.2  Middleware
+    7.3  Routes
+    7.4  Controllers
+    7.5  Services
+ 8. Frontend — Client Details
+    8.1  Application Entry & Routing (App.jsx)
+    8.2  React Contexts
+    8.3  Pages
+    8.4  Components
+ 9. Core Features — In-Depth Explanation
+    9.1  Authentication & Role-Based Access Control
+    9.2  Classrooms
+    9.3  Syllabus Tree
+    9.4  Resource Management & File Uploads
+    9.5  PDF Viewer & Highlights
+    9.6  Collaborative Heatmaps
+    9.7  Threaded Discussions
+    9.8  Karma & Gamification System
+    9.9  Bounty Board
+    9.10 AI Chatbot
+    9.11 Exam Sections & Revision Tests
+    9.12 Professor Analytics Dashboard
+    9.13 Moderation & Verification
+    9.14 Email Notifications
+10. Use Cases (All 5 Official Use Cases)
+11. API Reference (All Endpoints)
+12. Environment Variables
+13. Database Migrations (All 9 Migrations)
+14. Security
+15. Testing Strategy
+16. Deployment
+17. CI/CD Pipeline
+18. Known Limitations & Notes
+19. Common Errors & Fixes
+20. Karma Points Ledger & Badge System
+
+================================================================================
+1. PROJECT OVERVIEW & VISION
+================================================================================
+
+NoteFlow is an AI-powered, collaborative note-sharing and academic resource
+management platform designed for university students and professors. It solves
+the problem of fragmented, unorganised study materials by providing a single
+private classroom environment where professors and students can upload, annotate,
+discuss, and review academic content.
+
+The platform's core differentiators are:
+  - Collaborative PDF annotation with real-time heatmaps showing which sections
+    are most studied by the class.
+  - A gamified Karma + Badge system that rewards contribution quality.
+  - A Bounty Board where students/professors can post rewards for specific notes.
+  - An integrated AI Chatbot (GPT-3.5-turbo + FAQ fallback) for platform help.
+  - Dedicated Exam Sections with AI-generated revision tests from uploaded PDFs.
+  - A Professor Analytics Dashboard for class engagement insights.
+  - Full Role-Based Access Control (RBAC) separating student and professor flows.
+
+The project was built as a Software Engineering course project and follows a
+monorepo structure with a React frontend (Vite) and a Node.js/Express backend,
+connected to a PostgreSQL database (Neon DB) and Supabase for file storage.
+
+================================================================================
+2. TEAM & STAKEHOLDERS
+================================================================================
+
+Team Name   : Team 27
+Student IDs : 24CSB0B84, 24CSB0B85 (Harshitha), 24CSB0B86 (Yajat)
+Department  : Computer Science
+Date        : January 2026
+
+Individual actor assignments per use case (from official use-case document):
+  - Use Case 1.0 (Create Private Classroom)  → Professor
+  - Use Case 2.0 (Upload File with Metadata) → Professor, Harshitha (24CSB0B85)
+  - Use Case 3.0 (Collaborative Heatmap)     → Professor, Yajat (24CSB0B86)
+  - Use Case 4.0 (Upload Exam Resources)     → SangramReddy (24CSB0B84), Professor
+  - Use Case 5.0 (Take Revision Test)        → Charana
+
+Stakeholders:
+  - Students       : Primary users. Browse, upload, annotate, discuss, take tests.
+  - Professors     : Classroom owners. Verify resources, moderate, view analytics.
+  - University IT  : Concerned with data privacy, access control, compliance.
+
+================================================================================
+3. TECH STACK (FULL BREAKDOWN)
+================================================================================
+
+FRONTEND
+--------
+  Framework     : React 18.3.1
+  Build Tool    : Vite 6.0.5
+  Styling       : TailwindCSS 3.4.17 + PostCSS + Autoprefixer
+  UI Components : shadcn/ui (built on Radix UI primitives)
+  Radix Prims   : Accordion, AlertDialog, Avatar, Dialog, DropdownMenu,
+                  Label, Progress, Select, Separator, Slot, Tabs, Toast, Tooltip
+  Icons         : Lucide React 0.469.0
+  Routing       : React Router DOM 6.22.3
+  HTTP Client   : Axios 1.6.8
+  PDF Rendering : react-pdf 10.4.1 (Mozilla PDF.js wrapper)
+  Charts        : Recharts 3.8.1 (for analytics dashboards)
+  Drag & Drop   : @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
+  File Upload   : react-dropzone 15.0.0
+  Animations    : react-confetti 6.4.0 (for level-up celebrations)
+  Auth Storage  : @supabase/supabase-js 2.39.7 (client-side auth session)
+  Testing       : Vitest 1.6.0 + React Testing Library (RTL) + jsdom
+
+BACKEND
+-------
+  Runtime       : Node.js 20.x
+  Framework     : Express 4.18.3
+  Database ORM  : Raw SQL via pg (node-postgres) 8.11.3
+  Database      : PostgreSQL hosted on Neon DB (serverless, free tier)
+  File Storage  : Supabase Storage (S3-compatible)
+  Auth Provider : Supabase Auth (JWT-based)
+  AI            : OpenAI Node SDK 6.33.0 (GPT-3.5-turbo)
+  Email         : Nodemailer 8.0.4 (Gmail App Password or SMTP)
+  File Handling : Multer 2.1.1 (multipart/form-data parsing)
+  File Type Det.: file-type 16.5.4
+  Image Process : sharp 0.34.5 (thumbnail generation)
+  PDF Process   : pdf-lib 1.17.1 (PDF manipulation)
+  ID Generation : nanoid 3.3.7, uuid 13.0.0
+  Security      : Helmet 7.1.0, express-rate-limit 8.3.1,
+                  express-validator 7.0.1, bcryptjs 2.4.3, jsonwebtoken 9.0.2
+  Logging       : morgan 1.10.0
+  Hot Reload    : nodemon 3.1.0
+  Testing       : Jest 29.7.0 + Supertest 6.3.4
+
+INFRASTRUCTURE
+--------------
+  Frontend Host : Vercel (free tier)
+  Backend Host  : Render (free tier, Oregon region)
+  Database Host : Neon DB (serverless PostgreSQL, free 0.5GB)
+  File Storage  : Supabase Storage (free 1GB)
+  Auth Service  : Supabase Auth (free tier)
+  CI/CD         : GitHub Actions (runs on every push/PR)
+  Optional Cache: Redis (Upstash, optional — app works without it)
+  Optional Mon. : Sentry (optional error tracking)
+
+================================================================================
+4. SYSTEM ARCHITECTURE
+================================================================================
+
+The system follows a classic three-tier architecture:
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                         USER'S BROWSER                          │
+  │   React 18 SPA (Vite) — runs at http://localhost:5173 (dev)    │
+  │         or https://noteflow.vercel.app (production)             │
+  └───────────────────────────┬─────────────────────────────────────┘
+                              │ HTTPS (JSON REST API calls via Axios)
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │               EXPRESS 4 BACKEND API SERVER                      │
+  │   Runs at http://localhost:3001 (dev) / Render.com (prod)      │
+  │                                                                 │
+  │   Middleware Stack:                                             │
+  │     helmet → cors → json parser → HTTPS redirect →             │
+  │     request logger → morgan → routes                           │
+  │                                                                 │
+  │   Route Modules (13 total):                                     │
+  │     /api/auth, /api/classrooms, /api/syllabus,                 │
+  │     /api/resources, /api/highlights, /api/discussions,          │
+  │     /api/karma, /api/bounties, /api/analytics,                 │
+  │     /api/verify, /api/moderate, /api/chat, /api/exam           │
+  └───┬─────────────────────┬──────────────────────┬───────────────┘
+      │                     │                      │
+      ▼                     ▼                      ▼
+  ┌──────────┐      ┌──────────────┐      ┌──────────────────┐
+  │ Neon DB  │      │  Supabase    │      │  OpenAI API      │
+  │PostgreSQL│      │  Storage     │      │  GPT-3.5-turbo   │
+  │ (SQL)    │      │  (S3 files)  │      │  (chatbot+tests) │
+  └──────────┘      └──────────────┘      └──────────────────┘
+
+AUTHENTICATION FLOW:
+  1. User signs up / logs in via Supabase Auth (frontend).
+  2. Supabase returns a JWT access token.
+  3. Frontend stores token in Supabase session, attaches to every API request
+     as "Authorization: Bearer <token>".
+  4. Backend auth.middleware.js verifies the token via supabaseAdmin.auth.getUser().
+  5. If valid, it fetches the user's full profile (id, email, full_name, role)
+     from the local PostgreSQL users table and attaches to req.user.
+  6. Role middleware (role.middleware.js) then checks req.user.role === 'professor'
+     for professor-only endpoints.
+
+================================================================================
+5. DIRECTORY & FILE STRUCTURE
+================================================================================
+
+NoteFlow/                           ← Project root (monorepo)
+├── .github/
+│   └── workflows/
+│       └── ci.yml                  ← GitHub Actions CI/CD pipeline
+├── .gitignore                      ← Ignores node_modules, .env, dist, etc.
+├── README.md                       ← Quick-start guide, feature table, API ref
+├── SETUP_INSTRUCTIONS.md           ← Detailed local + production setup guide
+├── NOTEFLOW_COMPLETE_DOCUMENTATION.txt ← THIS FILE — full project explanation
+├── package.json                    ← Root workspace (concurrently, scripts)
+├── package-lock.json
+├── render.yaml                     ← Render.com deployment configuration
+├── vercel.json                     ← Vercel frontend + API proxy config
+├── supabase_bucket_setup.sql       ← SQL to configure Supabase storage policies
+├── pdf_contents.txt                ← Extracted text from Use Case PDF (reference)
+├── read_pdf.js                     ← Helper script to extract PDF text
+├── read_pdf.py                     ← Python alternative for PDF extraction
+│
+├── documents/                      ← Project documentation PDFs
+│   ├── SRS_final.pdf               ← Software Requirements Specification
+│   └── UseCaseFinal.pdf            ← Official use case document
+│
+├── client/                         ← React + Vite frontend application
+│   ├── .env.example                ← Client environment variable template
+│   ├── index.html                  ← HTML entry point (loads /src/main.jsx)
+│   ├── package.json                ← Client dependencies & scripts
+│   ├── vite.config.js              ← Vite config (React plugin, proxy, aliases)
+│   ├── tailwind.config.js          ← TailwindCSS theme customisation
+│   ├── postcss.config.js           ← PostCSS config for Tailwind
+│   ├── vitest.setup.js             ← Vitest test setup (jest-dom matchers)
+│   └── src/
+│       ├── main.jsx                ← ReactDOM.createRoot entry point
+│       ├── App.jsx                 ← Root component: providers + all routes
+│       ├── index.css               ← Global CSS (Tailwind directives + base)
+│       ├── context/
+│       │   ├── AuthContext.jsx     ← Auth state (user, login, logout, signup)
+│       │   ├── ClassroomContext.jsx← Current classroom state management
+│       │   └── SyllabusContext.jsx ← Syllabus tree state management
+│       ├── lib/
+│       │   └── api.js              ← Axios instance + all API call helpers
+│       ├── pages/
+│       │   ├── LoginPage.jsx       ← Email/password login form
+│       │   ├── SignupPage.jsx      ← Registration (name, email, role, password)
+│       │   ├── ResetPasswordPage.jsx ← Forgot/reset password flow
+│       │   ├── DashboardPage.jsx   ← Home: recent classrooms, quick stats
+│       │   ├── ClassroomsPage.jsx  ← List all classrooms, create/join modal
+│       │   ├── ClassroomDetailPage.jsx ← Main classroom view with tabs
+│       │   ├── ResourceViewerPage.jsx  ← In-browser PDF viewer + highlights
+│       │   ├── BountyBoardPage.jsx     ← Classroom bounty board
+│       │   ├── UserProfilePage.jsx     ← Karma, badges, upload history
+│       │   ├── ProfessorDashboardPage.jsx ← Analytics and moderation
+│       │   └── ExamSectionPage.jsx     ← Exam resources + revision tests
+│       ├── components/
+│       │   ├── Layout.jsx          ← App shell: sidebar, topbar, ChatWidget
+│       │   ├── ProtectedRoute.jsx  ← Redirects unauthenticated users to /login
+│       │   ├── ErrorBoundary.jsx   ← Catches React render errors gracefully
+│       │   ├── chat/
+│       │   │   └── ChatWidget.jsx  ← Floating AI chatbot widget (bottom-right)
+│       │   ├── bounty/             ← Bounty card, create modal, submission form
+│       │   ├── exam/               ← Exam resource card, test player components
+│       │   ├── karma/              ← Karma display, leaderboard, badge cards
+│       │   ├── professor/          ← Analytics charts, moderation tables
+│       │   ├── resources/          ← Resource card, upload modal, viewer utils
+│       │   ├── ui/                 ← shadcn/ui base components (Button, Card, etc.)
+│       │   └── viewer/             ← PDF viewer, highlight toolbar, heatmap layer
+│       └── __tests__/             ← Vitest test files for client components
+│
+└── server/                         ← Node.js + Express backend API
+    ├── .env.example                ← Server environment variable template
+    ├── package.json                ← Server dependencies & scripts
+    ├── nodemon.json                ← Nodemon config (watch src/, ignore tests)
+    ├── migrate.js                  ← Single migration runner
+    ├── run-migrations.js           ← Runs all pending migrations in order
+    ├── db_test.js                  ← Manual DB connection test script
+    ├── debugBugs.js                ← Debug helper script
+    ├── patch-bounties.js           ← One-time bounty data patch script
+    ├── run-fix.js                  ← General fix/patch runner
+    ├── testMyBounties.js           ← Manual bounty API test script
+    ├── migrations/                 ← SQL migration files (9 total, run in order)
+    │   ├── 001_initial_schema.sql  ← users, classrooms, classroom_members
+    │   ├── 002_syllabus_resources.sql ← syllabus, syllabus_nodes, resources
+    │   ├── 003_file_management.sql ← file_versions, resource_tags, uploads
+    │   ├── 004_heatmaps_discussions.sql ← highlights, heatmap_data, discussions
+    │   ├── 005_bounty_karma.sql    ← badges, user_karma, karma_transactions,
+    │   │                              user_badges, bounties, bounty_submissions,
+    │   │                              notifications
+    │   ├── 006_analytics_moderation.sql ← analytics_events, verification_queue,
+    │   │                                   moderation_logs, soft-delete columns
+    │   ├── 007_add_user_karma_columns.sql ← Adds karma columns to users table
+    │   ├── 008_chat_messages.sql   ← chat_messages table for AI chatbot history
+    │   └── 009_exam_sections.sql   ← exam_sections, exam_resources,
+    │                                  revision_tests, test_questions, test_attempts
+    └── src/
+        ├── index.js                ← Express app setup, all middleware, all routes
+        ├── config/
+        │   ├── db.js               ← PostgreSQL pool connection (pg.Pool)
+        │   └── supabase.js         ← Supabase admin client (service role key)
+        ├── middleware/
+        │   ├── auth.middleware.js  ← JWT verification via Supabase, attaches req.user
+        │   ├── role.middleware.js  ← Professor-only route guard
+        │   └── rateLimit.middleware.js ← express-rate-limit config for auth + chat
+        ├── routes/                 ← Express Router definitions (13 route files)
+        │   ├── auth.routes.js, classroom.routes.js, syllabus.routes.js,
+        │   │   resource.routes.js, highlight.routes.js, discussion.routes.js,
+        │   │   karma.routes.js, bounty.routes.js, analytics.routes.js,
+        │   │   verify.routes.js, moderate.routes.js, chat.routes.js, exam.routes.js
+        ├── controllers/            ← Business logic handlers (11 controller files)
+        │   ├── auth.controller.js, classroom.controller.js, syllabus.controller.js,
+        │   │   resource.controller.js, highlight.controller.js,
+        │   │   discussion.controller.js, karma.controller.js, bounty.controller.js,
+        │   │   analytics.controller.js, exam.controller.js, chat.controller.js
+        ├── services/               ← Reusable service modules
+        │   ├── aiService.js        ← OpenAI GPT-3.5-turbo + FAQ fallback chatbot
+        │   ├── emailService.js     ← Nodemailer email notifications
+        │   ├── fileProcessor.js    ← File validation, thumbnail gen, compression
+        │   ├── heatmapService.js   ← Heatmap aggregation calculations
+        │   └── karmaEngine.js      ← Karma award, level calculation, badge checking
+        └── __tests__/             ← Jest test files for server routes & services
+
+================================================================================
+6. DATABASE SCHEMA (ALL TABLES)
+================================================================================
+
+NoteFlow uses PostgreSQL (Neon DB). All tables use UUID primary keys generated
+via uuid_generate_v4(). All tables with updated_at have an auto-trigger.
+
+────────────────────────────────────────
+TABLE: users
+────────────────────────────────────────
+  id               UUID PK DEFAULT uuid_generate_v4()
+  email            TEXT UNIQUE NOT NULL
+  full_name        TEXT NOT NULL
+  role             TEXT NOT NULL CHECK (role IN ('professor', 'student'))
+  university_email TEXT
+  avatar_url       TEXT
+  is_flagged       BOOLEAN DEFAULT FALSE      (added in migration 006)
+  is_restricted    BOOLEAN DEFAULT FALSE      (added in migration 006)
+  flag_reason      TEXT                       (added in migration 006)
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_users_email, idx_users_role
+
+────────────────────────────────────────
+TABLE: classrooms
+────────────────────────────────────────
+  id            UUID PK
+  name          TEXT NOT NULL
+  section       TEXT NOT NULL
+  professor_id  UUID REFERENCES users(id) ON DELETE CASCADE
+  invite_code   TEXT UNIQUE NOT NULL (6-character code)
+  description   TEXT
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_classrooms_professor, idx_classrooms_invite_code (UNIQUE)
+
+────────────────────────────────────────
+TABLE: classroom_members
+────────────────────────────────────────
+  id            UUID PK
+  classroom_id  UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  user_id       UUID REFERENCES users(id) ON DELETE CASCADE
+  joined_at     TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (classroom_id, user_id)
+
+  Indexes: idx_members_classroom, idx_members_user
+
+────────────────────────────────────────
+TABLE: syllabus
+────────────────────────────────────────
+  id            UUID PK
+  classroom_id  UUID REFERENCES classrooms(id) ON DELETE CASCADE (UNIQUE)
+  created_by    UUID REFERENCES users(id)
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: syllabus_nodes
+────────────────────────────────────────
+  id            UUID PK
+  syllabus_id   UUID REFERENCES syllabus(id) ON DELETE CASCADE
+  parent_id     UUID REFERENCES syllabus_nodes(id) ON DELETE CASCADE (self-ref)
+  node_type     TEXT CHECK (node_type IN ('unit', 'topic', 'subtopic'))
+  title         TEXT NOT NULL
+  order_index   INT DEFAULT 0
+  has_resources BOOLEAN DEFAULT FALSE (auto-updated by trigger)
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_nodes_syllabus, idx_nodes_parent
+
+────────────────────────────────────────
+TABLE: resources
+────────────────────────────────────────
+  id               UUID PK
+  syllabus_node_id UUID REFERENCES syllabus_nodes(id) ON DELETE CASCADE
+  classroom_id     UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  uploader_id      UUID REFERENCES users(id) ON DELETE CASCADE
+  file_name        TEXT NOT NULL
+  file_url         TEXT NOT NULL (Supabase Storage URL)
+  file_type        TEXT
+  metadata         JSONB DEFAULT '{}' (title, description, tags, thumbnail_url, etc.)
+  version          INT DEFAULT 1
+  is_verified      BOOLEAN DEFAULT FALSE
+  is_deleted       BOOLEAN DEFAULT FALSE      (added migration 006)
+  deleted_at       TIMESTAMPTZ                (added migration 006)
+  deleted_by       UUID REFERENCES users(id)  (added migration 006)
+  view_count       INT DEFAULT 0              (added migration 006)
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_resources_node, idx_resources_classroom, idx_resources_uploader
+  Trigger: trg_enqueue_verification — auto-adds to verification_queue on insert
+  Trigger: trg_update_has_resources_insert/delete — updates has_resources on node
+
+────────────────────────────────────────
+TABLE: highlights
+────────────────────────────────────────
+  id            UUID PK
+  resource_id   UUID REFERENCES resources(id) ON DELETE CASCADE
+  user_id       UUID REFERENCES users(id) ON DELETE CASCADE
+  page_number   INT NOT NULL
+  coordinates   JSONB NOT NULL  { x1, y1, x2, y2 } normalized 0-1 relative to page
+  text_content  TEXT (the actual selected text)
+  color         TEXT DEFAULT '#facc15' (yellow)
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_highlights_resource, idx_highlights_resource_page, idx_highlights_user
+
+────────────────────────────────────────
+TABLE: heatmap_data
+────────────────────────────────────────
+  id               UUID PK
+  resource_id      UUID REFERENCES resources(id) ON DELETE CASCADE
+  page_number      INT NOT NULL
+  aggregated_zones JSONB DEFAULT '[]' — array of { x, y, width, height, intensity 0-100 }
+  last_calculated  TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (resource_id, page_number)
+
+  Indexes: idx_heatmap_resource
+
+────────────────────────────────────────
+TABLE: discussions
+────────────────────────────────────────
+  id           UUID PK
+  resource_id  UUID REFERENCES resources(id) ON DELETE CASCADE
+  parent_id    UUID REFERENCES discussions(id) ON DELETE CASCADE (threading)
+  user_id      UUID REFERENCES users(id) ON DELETE CASCADE
+  content      TEXT NOT NULL
+  page_number  INT (which PDF page the discussion is anchored to)
+  position     JSONB  { x, y } for anchored position on page
+  resolved     BOOLEAN DEFAULT FALSE
+  pinned       BOOLEAN DEFAULT FALSE
+  is_deleted   BOOLEAN DEFAULT FALSE (added migration 006)
+  is_helpful   BOOLEAN DEFAULT FALSE (added migration 006)
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_discussions_resource, idx_discussions_parent,
+           idx_discussions_user, idx_discussions_page
+
+────────────────────────────────────────
+TABLE: discussion_votes
+────────────────────────────────────────
+  id             UUID PK
+  discussion_id  UUID REFERENCES discussions(id) ON DELETE CASCADE
+  user_id        UUID REFERENCES users(id) ON DELETE CASCADE
+  vote_type      TEXT CHECK (vote_type IN ('up', 'down'))
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (discussion_id, user_id) — one vote per user per discussion
+
+────────────────────────────────────────
+TABLE: badges
+────────────────────────────────────────
+  id          UUID PK
+  name        TEXT UNIQUE NOT NULL
+  description TEXT NOT NULL
+  icon        TEXT DEFAULT '🏅'
+  rarity      TEXT CHECK (rarity IN ('common', 'rare', 'legendary'))
+  criteria    JSONB  { "type": "upload_count", "threshold": 10 }
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+
+  Pre-seeded badges (11 total):
+    - Getting Started  (common)    — Upload 1 resource
+    - Contributor      (common)    — Upload 10 resources
+    - Knowledge Sharer (rare)      — Upload 50 resources
+    - Helper           (common)    — Fulfill 1 bounty
+    - Bounty Hunter    (rare)      — Fulfill 5 bounties
+    - Legendary Hunter (legendary) — Fulfill 20 bounties
+    - Certified        (rare)      — Have 1 professor-verified resource
+    - Popular          (rare)      — Receive 50 upvotes
+    - Wise One         (legendary) — 10 discussions marked helpful
+    - Streak Master    (common)    — 7-day login streak
+    - Legend           (legendary) — Reach Level 5 (1000+ karma)
+
+────────────────────────────────────────
+TABLE: user_karma
+────────────────────────────────────────
+  id            UUID PK
+  user_id       UUID REFERENCES users(id) ON DELETE CASCADE (UNIQUE)
+  total_points  INT DEFAULT 0
+  level         INT DEFAULT 1
+  last_login    DATE
+  login_streak  INT DEFAULT 0
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_user_karma_user, idx_user_karma_points DESC
+
+────────────────────────────────────────
+TABLE: karma_transactions
+────────────────────────────────────────
+  id           UUID PK
+  user_id      UUID REFERENCES users(id) ON DELETE CASCADE
+  points       INT NOT NULL (can be negative for penalties)
+  action_type  TEXT CHECK (action_type IN (
+                 'upload', 'upvote', 'downvote', 'bounty_fulfill',
+                 'bounty_create', 'discussion_helpful', 'login_streak',
+                 'professor_verify', 'spam_penalty', 'badge_bonus',
+                 'manual_adjustment'))
+  reference_id UUID (resource_id, bounty_id, discussion_id, etc.)
+  description  TEXT
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+
+  Append-only immutable ledger. Never deleted or updated.
+  Indexes: idx_karma_tx_user, idx_karma_tx_created DESC, idx_karma_tx_action
+
+────────────────────────────────────────
+TABLE: user_badges
+────────────────────────────────────────
+  id         UUID PK
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE
+  badge_id   UUID REFERENCES badges(id) ON DELETE CASCADE
+  earned_at  TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (user_id, badge_id)
+
+────────────────────────────────────────
+TABLE: bounties
+────────────────────────────────────────
+  id               UUID PK
+  classroom_id     UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  syllabus_node_id UUID REFERENCES syllabus_nodes(id) ON DELETE SET NULL
+  requester_id     UUID REFERENCES users(id) ON DELETE CASCADE
+  title            TEXT NOT NULL
+  description      TEXT NOT NULL
+  points_reward    INT DEFAULT 10 CHECK (points_reward > 0)
+  status           TEXT CHECK (status IN ('open','claimed','fulfilled','closed','expired'))
+  is_urgent        BOOLEAN DEFAULT FALSE
+  claimer_id       UUID REFERENCES users(id) ON DELETE SET NULL
+  claimed_at       TIMESTAMPTZ
+  expires_at       TIMESTAMPTZ
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_bounties_classroom, idx_bounties_status, idx_bounties_requester,
+           idx_bounties_claimer, idx_bounties_node
+
+────────────────────────────────────────
+TABLE: bounty_submissions
+────────────────────────────────────────
+  id           UUID PK
+  bounty_id    UUID REFERENCES bounties(id) ON DELETE CASCADE
+  fulfiller_id UUID REFERENCES users(id) ON DELETE CASCADE
+  resource_id  UUID REFERENCES resources(id) ON DELETE SET NULL
+  note         TEXT
+  status       TEXT CHECK (status IN ('pending','approved','rejected'))
+  reviewed_by  UUID REFERENCES users(id) ON DELETE SET NULL
+  reviewed_at  TIMESTAMPTZ
+  submitted_at TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: notifications
+────────────────────────────────────────
+  id         UUID PK
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE
+  type       TEXT (bounty_claimed, bounty_approved, badge_earned, professor_verify, etc.)
+  title      TEXT NOT NULL
+  message    TEXT NOT NULL
+  link       TEXT (frontend route to navigate to)
+  is_read    BOOLEAN DEFAULT FALSE
+  created_at TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_notifications_user, idx_notifications_unread
+
+────────────────────────────────────────
+TABLE: analytics_events
+────────────────────────────────────────
+  id           UUID PK
+  classroom_id UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  user_id      UUID REFERENCES users(id) ON DELETE SET NULL
+  event_type   TEXT CHECK (event_type IN (
+                 'view','download','upload','discussion_post','highlight',
+                 'bounty_create','bounty_claim','bounty_fulfill','login','search'))
+  resource_id  UUID REFERENCES resources(id) ON DELETE SET NULL
+  metadata     JSONB  (duration, search_terms, etc.)
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+
+  Indexes: idx_analytics_classroom, idx_analytics_user, idx_analytics_type,
+           idx_analytics_resource, idx_analytics_created DESC
+
+────────────────────────────────────────
+TABLE: verification_queue
+────────────────────────────────────────
+  id           UUID PK
+  resource_id  UUID REFERENCES resources(id) ON DELETE CASCADE (UNIQUE)
+  submitted_at TIMESTAMPTZ DEFAULT NOW()
+  reviewer_id  UUID REFERENCES users(id) ON DELETE SET NULL
+  status       TEXT CHECK (status IN ('pending','approved','rejected'))
+  decision_at  TIMESTAMPTZ
+  reject_reason TEXT
+
+  Auto-populated via trigger trg_enqueue_verification on resource insert.
+
+────────────────────────────────────────
+TABLE: moderation_logs
+────────────────────────────────────────
+  id           UUID PK
+  classroom_id UUID REFERENCES classrooms(id) ON DELETE SET NULL
+  moderator_id UUID REFERENCES users(id) ON DELETE CASCADE
+  action       TEXT CHECK (action IN (
+                 'verify','reject_resource','delete_resource','restore_resource',
+                 'flag_user','unflag_user','delete_discussion','restrict_user'))
+  target_type  TEXT CHECK (target_type IN ('resource','user','discussion','bounty'))
+  target_id    UUID
+  reason       TEXT
+  metadata     JSONB
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+
+  Immutable audit trail. Indexes: idx_mod_logs_classroom, idx_mod_logs_moderator,
+  idx_mod_logs_created DESC
+
+────────────────────────────────────────
+TABLE: chat_messages
+────────────────────────────────────────
+  id           UUID PK
+  user_id      UUID REFERENCES users(id) ON DELETE CASCADE
+  role         TEXT CHECK (role IN ('user', 'assistant'))
+  content      TEXT NOT NULL
+  rating       TEXT CHECK (rating IN ('up', 'down')) — thumbs up/down for bot msgs
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: exam_sections
+────────────────────────────────────────
+  id           UUID PK
+  classroom_id UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  exam_type    TEXT CHECK (exam_type IN ('midterm', 'endterm'))
+  title        TEXT DEFAULT ''
+  description  TEXT
+  is_active    BOOLEAN DEFAULT TRUE
+  created_by   UUID REFERENCES users(id) ON DELETE SET NULL
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (classroom_id, exam_type) — one midterm and one endterm per classroom
+
+────────────────────────────────────────
+TABLE: exam_resources
+────────────────────────────────────────
+  id              UUID PK
+  exam_section_id UUID REFERENCES exam_sections(id) ON DELETE CASCADE
+  classroom_id    UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  uploader_id     UUID REFERENCES users(id) ON DELETE SET NULL
+  file_name       TEXT NOT NULL
+  file_url        TEXT NOT NULL
+  file_type       TEXT NOT NULL
+  file_size       BIGINT DEFAULT 0
+  resource_type   TEXT CHECK (resource_type IN ('pyq','important_questions','quick_revision','other'))
+  year            INT (e.g., 2024 for 2024 PYQ paper)
+  topic_coverage  TEXT
+  description     TEXT
+  status          TEXT CHECK (status IN ('pending','approved','rejected'))
+  reviewed_by     UUID REFERENCES users(id) ON DELETE SET NULL
+  reviewed_at     TIMESTAMPTZ
+  reject_reason   TEXT
+  download_count  INT DEFAULT 0
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: revision_tests
+────────────────────────────────────────
+  id              UUID PK
+  exam_section_id UUID REFERENCES exam_sections(id) ON DELETE CASCADE
+  classroom_id    UUID REFERENCES classrooms(id) ON DELETE CASCADE
+  created_by      UUID REFERENCES users(id) ON DELETE SET NULL
+  title           TEXT NOT NULL
+  description     TEXT
+  duration_mins   INT DEFAULT 30 CHECK (duration_mins > 0)
+  total_questions INT DEFAULT 10
+  max_attempts    INT DEFAULT 3
+  topics_covered  TEXT[] (PostgreSQL array of topic strings)
+  is_active       BOOLEAN DEFAULT TRUE
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: test_questions
+────────────────────────────────────────
+  id          UUID PK
+  test_id     UUID REFERENCES revision_tests(id) ON DELETE CASCADE
+  question    TEXT NOT NULL
+  options     JSONB  — array of { "id": "A", "text": "..." }
+  correct_opt TEXT NOT NULL — id of the correct option (A/B/C/D)
+  explanation TEXT
+  order_num   INT DEFAULT 0
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+
+────────────────────────────────────────
+TABLE: test_attempts
+────────────────────────────────────────
+  id             UUID PK
+  test_id        UUID REFERENCES revision_tests(id) ON DELETE CASCADE
+  student_id     UUID REFERENCES users(id) ON DELETE CASCADE
+  answers        JSONB  — { question_id: selected_option_id }
+  score          INT DEFAULT 0
+  total_possible INT DEFAULT 0
+  percentage     NUMERIC(5,2) DEFAULT 0
+  time_taken_sec INT
+  status         TEXT CHECK (status IN ('in_progress','completed','timed_out','abandoned'))
+  started_at     TIMESTAMPTZ DEFAULT NOW()
+  completed_at   TIMESTAMPTZ
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+
+================================================================================
+7. BACKEND — SERVER DETAILS
+================================================================================
+
+7.1 ENTRY POINT (server/src/index.js)
+--------------------------------------
+The Express application is bootstrapped here. All middleware is applied in order:
+
+  1. helmet()         — Sets HTTP security headers (CSP, HSTS, X-Frame-Options,
+                        etc.). CSP is configured to allow Supabase, OpenAI,
+                        Google Fonts, and PDF.js.
+  2. cors()           — Allows requests from localhost:5173, 5174, 5175 (dev)
+                        and the CLIENT_URL env var (production Vercel URL).
+  3. express.json()   — Parses JSON request bodies (limit: 10MB).
+  4. urlencoded()     — Parses URL-encoded bodies (limit: 10MB).
+  5. HTTPS redirect   — In production, redirects HTTP → HTTPS.
+  6. Request logger   — Custom middleware that logs "[API CALL ⚡] METHOD /path".
+  7. morgan('dev')    — Standard HTTP request logger (status, timing, etc.).
+
+All 13 route modules are then mounted at their respective /api/* paths.
+
+A health check endpoint at GET /api/health returns:
+  { status: 'ok', timestamp, env, ai: 'openai' | 'rule-based' }
+
+Global 404 and 500 error handlers are defined after all routes.
+
+The server listens on PORT env var (default 3001).
+
+7.2 MIDDLEWARE
+--------------
+Three middleware files:
+
+  auth.middleware.js (authenticate)
+  ----------------------------------
+  - Reads "Authorization: Bearer <token>" from request headers.
+  - Validates the token against Supabase using supabaseAdmin.auth.getUser().
+  - Fetches the user's DB profile (id, email, full_name, role) from PostgreSQL.
+  - Attaches req.user and req.token.
+  - Returns 401 for missing, null, or invalid tokens.
+  - Guards: All protected routes use this middleware.
+
+  role.middleware.js (requireRole)
+  ----------------------------------
+  - Accepts a role string ('professor') as argument.
+  - Checks req.user.role === required role.
+  - Returns 403 Forbidden if role doesn't match.
+  - Used on: classroom creation, resource verification, moderation, analytics.
+
+  rateLimit.middleware.js
+  -----------------------
+  - Auth endpoints: 20 requests per 15 minutes per IP.
+  - Chat endpoints: 30 messages per minute per user.
+  - Prevents brute-force attacks and API abuse.
+
+7.3 ROUTES (13 Route Files)
+-----------------------------
+All routes are Express Routers mounted in index.js:
+
+  POST   /api/auth/signup           — Register new user
+  POST   /api/auth/login            — Login (returns token via Supabase)
+  GET    /api/auth/me               — Get current user profile
+  POST   /api/auth/reset-password   — Trigger password reset email
+
+  GET    /api/classrooms            — List user's classrooms
+  POST   /api/classrooms            — Create classroom (professor only)
+  POST   /api/classrooms/join       — Join by invite code (student)
+  GET    /api/classrooms/:id        — Get classroom details
+
+  GET    /api/syllabus/:classroomId — Get full syllabus tree
+  POST   /api/syllabus/:classroomId — Create/update syllabus node (professor)
+  DELETE /api/syllabus/node/:nodeId — Delete syllabus node (professor)
+
+  GET    /api/resources/:classroomId  — List resources for a classroom
+  POST   /api/resources               — Upload a new resource (multipart/form-data)
+  GET    /api/resources/:id/view      — Get resource download URL
+  DELETE /api/resources/:id           — Soft-delete resource
+
+  GET    /api/highlights/:resourceId  — Get all highlights for a resource
+  POST   /api/highlights              — Save a new highlight
+  DELETE /api/highlights/:id          — Delete a highlight
+
+  GET    /api/discussions/:resourceId — Get threaded discussions
+  POST   /api/discussions             — Post a new discussion or reply
+  PATCH  /api/discussions/:id/vote    — Vote on a discussion (up/down)
+  DELETE /api/discussions/:id         — Soft-delete discussion
+
+  GET    /api/karma/:userId           — Get user's karma summary
+  GET    /api/karma/:userId/history   — Get karma transaction history
+  GET    /api/karma/leaderboard       — Top users by karma (per classroom)
+
+  GET    /api/bounties/:classroomId   — List bounties in a classroom
+  POST   /api/bounties                — Create a bounty
+  PATCH  /api/bounties/:id/claim      — Claim a bounty
+  POST   /api/bounties/:id/submit     — Submit fulfillment resource
+  PATCH  /api/bounties/:id/review     — Professor approves/rejects submission
+
+  GET    /api/analytics/:classroomId  — Get full analytics for a classroom
+  GET    /api/analytics/:classroomId/engagement — Engagement over time
+  GET    /api/analytics/:classroomId/resources  — Resource quality scores
+  GET    /api/analytics/:classroomId/heatmap    — Heatmap insights
+
+  GET    /api/verify/queue            — Get pending verification queue (professor)
+  PATCH  /api/verify/:resourceId      — Approve or reject a resource
+
+  POST   /api/moderate/resource/:id   — Delete/restore resource
+  POST   /api/moderate/user/:id       — Flag/restrict a user
+  POST   /api/moderate/discussion/:id — Delete discussion
+
+  POST   /api/chat                    — Send a chat message, get AI reply
+  GET    /api/chat/history            — Get paginated chat history for user
+  DELETE /api/chat/history            — Clear all chat history for user
+  PATCH  /api/chat/:id/rate           — Rate a bot message (up/down thumbs)
+
+  GET    /api/exam/:classroomId/sections          — Get exam sections for classroom
+  POST   /api/exam/:classroomId/sections          — Create exam section (professor)
+  GET    /api/exam/sections/:sectionId/resources  — List exam resources
+  POST   /api/exam/sections/:sectionId/resources  — Upload exam resource
+  PATCH  /api/exam/resources/:id/review           — Approve/reject exam resource
+  GET    /api/exam/sections/:sectionId/tests      — List revision tests
+  POST   /api/exam/sections/:sectionId/tests/generate — AI-generate a test
+  POST   /api/exam/tests/:testId/attempt          — Start a test attempt
+  PATCH  /api/exam/attempts/:attemptId/submit     — Submit a test attempt
+  GET    /api/exam/attempts/:attemptId/results    — Get test results
+
+7.4 CONTROLLERS (11 Controller Files)
+--------------------------------------
+Each controller exports async handler functions used by the routes.
+Key controllers explained:
+
+  auth.controller.js
+  - signUp(): Creates Supabase Auth user, then inserts row in users table.
+  - login(): Authenticates via Supabase, creates user_karma row if missing,
+             records login streak, returns session token.
+  - getMe(): Returns req.user (already populated by middleware).
+
+  resource.controller.js
+  - uploadResource(): Uses Multer for multipart parsing. Validates file type
+    and size. Calls fileProcessor.js for thumbnail and compression. Uploads
+    to Supabase Storage. Inserts DB record. Awards karma via karmaEngine.
+  - getResourceViewUrl(): Generates signed/public URL for viewing.
+  - deleteResource(): Soft-deletes by setting is_deleted = TRUE.
+
+  highlight.controller.js
+  - saveHighlight(): Saves highlight coordinates (normalized 0-1), page number,
+    and text content. Triggers heatmap recalculation via heatmapService.
+  - getHeatmap(): Returns aggregated heatmap_data for a resource page.
+
+  exam.controller.js
+  - generateTest(): Calls aiService.generateTestFromContext() with extracted
+    text from uploaded exam resources. AI returns a structured JSON test which
+    is saved to revision_tests and test_questions tables.
+  - submitAttempt(): Grades answers by comparing to correct_opt for each
+    question. Calculates percentage. Awards karma based on score (see section 9).
+
+  analytics.controller.js
+  - getClassroomAnalytics(): Aggregates data from analytics_events,
+    resources, discussions, karma_transactions, and user_karma tables.
+    Returns engagement timelines, resource quality scores, heatmap insights,
+    student activity rankings, and bounty statistics.
+
+  bounty.controller.js
+  - createBounty(): Creates bounty, optionally links to syllabus node.
+  - claimBounty(): Updates status to 'claimed', sets claimer_id and claimed_at.
+  - submitBounty(): Creates bounty_submission record with uploaded resource.
+  - reviewBounty(): Professor approves → awards karma to fulfiller, updates
+    bounty status to 'fulfilled'. Reject → sends rejection notification.
+
+7.5 SERVICES (5 Service Modules)
+---------------------------------
+  aiService.js
+  - getChatResponse(userMessage, history, contextText):
+      If OPENAI_API_KEY is set: calls GPT-3.5-turbo via OpenAI SDK.
+      Sends system prompt (NoteFlow context) + last 6 turns + user message.
+      Falls back to rule-based FAQ if OpenAI fails or key is missing.
+  - generateTestFromContext(prompt, contextText):
+      Sends PDF text as context to GPT-3.5-turbo.
+      Instructs model to return strict JSON matching the test schema.
+      Temperature 0.5 for accuracy. Max 3000 tokens. Strips markdown wrappers.
+  - FAQ_RULES: 10 rule patterns covering join, upload, karma, heatmap,
+      bounty, password, discussion, professor, download, and search topics.
+
+  karmaEngine.js
+  - KARMA_POINTS table:
+      upload: +10, upvote: +2, downvote: -1, bounty_fulfill: +20,
+      discussion_helpful: +5, login_streak: +1, professor_verify: +15,
+      spam_penalty: -50
+  - LEVELS:
+      Level 1 Novice (0-100), Level 2 Contributor (101-300),
+      Level 3 Expert (301-600), Level 4 Master (601-1000),
+      Level 5 Legend (1001+)
+  - awardKarma(): Inserts karma_transaction, updates user_karma total,
+      recalculates level, checks and awards badges, logs level-ups.
+  - checkAndAwardBadges(): Queries all badges, checks BADGE_CHECKERS for
+      each unearned badge, inserts user_badges row, creates notification.
+  - recordLoginStreak(): Checks last_login date, increments or resets streak,
+      awards login_streak karma.
+  - createNotification(): Inserts notification row, optionally sends email
+      for badge_earned, bounty_approved, professor_verify events.
+
+  emailService.js
+  - sendNotificationEmail(): Uses Nodemailer with Gmail App Password or SMTP.
+    Sends HTML emails for bounty claims, resource approvals, badge unlocks.
+
+  fileProcessor.js
+  - validateFile(): Checks MIME type against allowed types (PDF, DOCX, PPTX, TXT).
+  - generateThumbnail(): Uses sharp to create a JPEG preview image.
+  - compressFile(): Compresses large files for storage efficiency.
+  - extractText(): Extracts raw text from PDF/document for AI test generation.
+
+  heatmapService.js
+  - calculateHeatmap(resourceId, pageNumber): Fetches all highlights for
+    a resource page. Aggregates overlapping regions. Normalises intensity (0-100).
+    Upserts result into heatmap_data table.
+  - Gradient mapping: 1-5 overlapping highlights = light yellow,
+    6-15 = orange, 16+ = red (hot spot).
+
+================================================================================
+8. FRONTEND — CLIENT DETAILS
+================================================================================
+
+8.1 APPLICATION ENTRY & ROUTING (App.jsx)
+-------------------------------------------
+The React app is wrapped in four providers (outermost to innermost):
+  ErrorBoundary → AuthProvider → ClassroomProvider → SyllabusProvider
+
+Then React Router v6 defines all routes:
+
+  Public Routes (no auth required):
+    /login              → LoginPage
+    /signup             → SignupPage
+    /reset-password     → ResetPasswordPage
+
+  Protected Routes (wrapped in ProtectedRoute):
+    /dashboard                                      → DashboardPage
+    /classrooms                                     → ClassroomsPage
+    /classrooms/:id                                 → ClassroomDetailPage
+    /classrooms/:classroomId/resources/:resourceId/view → ResourceViewerPage
+    /classrooms/:classroomId/bounties               → BountyBoardPage
+    /profile/:userId                                → UserProfilePage
+    /classrooms/:classroomId/professor              → ProfessorDashboardPage
+    /classrooms/:classroomId/exam                   → ExamSectionPage
+
+  Redirects:
+    / and /* → /dashboard (catches all unmatched routes)
+
+8.2 REACT CONTEXTS
+-------------------
+  AuthContext.jsx
+  - Manages: user object, isLoading, authError.
+  - Methods: signUp(), login(), logout(), resetPassword().
+  - On mount: subscribes to Supabase Auth state changes.
+  - Stores session token for API calls.
+
+  ClassroomContext.jsx
+  - Manages: currentClassroom, classrooms list, loading state.
+  - Methods: loadClassroom(id), createClassroom(), joinClassroom(code).
+  - Shared across ClassroomDetailPage and child components.
+
+  SyllabusContext.jsx
+  - Manages: syllabusTree (nested nodes), loading state.
+  - Methods: loadSyllabus(classroomId), addNode(), updateNode(), deleteNode().
+  - Tree is displayed in ClassroomDetailPage sidebar.
+
+8.3 PAGES
+----------
+  LoginPage.jsx
+  - Email/password form with "Remember me" option.
+  - Links to SignupPage and ResetPasswordPage.
+  - Calls AuthContext.login(), redirects to /dashboard on success.
+  - Shows toast notification on error.
+
+  SignupPage.jsx
+  - Fields: full_name, email, password, role (student/professor).
+  - Calls AuthContext.signUp().
+  - Role selection determines which features the user can access throughout app.
+
+  ResetPasswordPage.jsx
+  - Sends password reset email via Supabase Auth.
+  - Shows confirmation message after submission.
+
+  DashboardPage.jsx
+  - Shows greeting, recent classrooms, and quick action buttons.
+  - Students see karma summary and recent activity.
+  - Professors see classroom overview and pending moderation alerts.
+
+  ClassroomsPage.jsx
+  - Lists all classrooms the user belongs to (as member or professor).
+  - "Create Classroom" modal (professor only): name, section, description.
+  - "Join Classroom" modal (student): enter 6-char invite code.
+  - Each classroom card shows name, member count, invite code (professor view).
+
+  ClassroomDetailPage.jsx
+  - The main classroom view with tabbed navigation:
+      • Resources tab — syllabus tree on left, resource listing on right.
+      • Discussions tab — all discussions across classroom resources.
+      • Bounties tab — quick link to BountyBoardPage.
+      • Members tab — list of enrolled students.
+      • Exam tab — link to ExamSectionPage.
+      • Professor tab (professors only) — link to ProfessorDashboardPage.
+  - Upload resource button available in Resources tab.
+  - Syllabus tree supports drag-and-drop reordering (@dnd-kit).
+
+  ResourceViewerPage.jsx
+  - Full-screen in-browser PDF viewer using react-pdf (PDF.js).
+  - Toolbar: zoom in/out, page navigation, download button, heatmap toggle.
+  - Highlight mode: user selects text, chooses color, saves highlight.
+  - Heatmap overlay: semi-transparent color gradient on highlighted regions.
+  - Discussion panel: shows threaded discussions for selected page.
+  - Annotation popup: click on highlight → shows who highlighted, and discussion threads.
+
+  BountyBoardPage.jsx
+  - Shows all bounties in the classroom (open, claimed, fulfilled).
+  - Filter by status, sort by reward, search by title.
+  - Create Bounty button: title, description, karma reward, urgency flag,
+    optional syllabus node link.
+  - Claim button: student claims an open bounty.
+  - Submit button: student uploads file as fulfillment for claimed bounty.
+  - Review panel (professor): approve or reject bounty submission.
+
+  UserProfilePage.jsx
+  - Shows user's karma total, current level (with progress bar to next level).
+  - Badges earned (icons + names with unlock date).
+  - Upload history: list of all resources uploaded.
+  - Karma transaction history: scrollable ledger of all point events.
+  - Leaderboard position in each classroom.
+
+  ProfessorDashboardPage.jsx
+  - Engagement Over Time: line chart (views, downloads, uploads, discussions per week).
+  - Resource Quality Scores: bar chart ranking resources by engagement.
+  - Heatmap Insights: which resources and pages have most highlights.
+  - Student Activity Table: per-student engagement stats.
+  - Verification Queue: list of resources awaiting professor approval.
+  - Moderation Panel: flag/restrict users, delete inappropriate content.
+
+  ExamSectionPage.jsx
+  - Two tabs: Midterm and Endterm.
+  - Each tab shows:
+      • Exam Resources sub-tab: list of PYQs, important questions, quick revision files.
+      • Revision Tests sub-tab: list of available practice tests.
+  - Upload Exam Resource: file + resource type + year + description.
+    Student uploads show as "Pending" until professor approves.
+    Professor uploads are auto-approved.
+  - Take Test: student clicks a test → timed test player with question navigation,
+    progress bar, countdown timer, submit button.
+  - Generate Test (professor only): select resource(s), configure difficulty and
+    question count, AI generates test from PDF content.
+
+8.4 COMPONENTS
+--------------
+  Layout.jsx
+  - The overall app shell: left sidebar with navigation, top header, main content area.
+  - Always renders ChatWidget (AI chatbot floating button).
+  - Sidebar shows: Dashboard, My Classrooms, Profile links.
+  - Topbar: user avatar, notification bell, logout button.
+
+  ProtectedRoute.jsx
+  - Checks AuthContext for authenticated user.
+  - Redirects to /login if unauthenticated.
+
+  ErrorBoundary.jsx
+  - Wraps the entire app.
+  - Catches React render errors and shows a friendly error screen.
+  - Prevents white screen of death.
+
+  ChatWidget.jsx (chat/)
+  - Floating button (bottom-right) that opens a chat panel.
+  - Input box + send button + message history.
+  - Shows typing indicator while waiting for AI response.
+  - Rate/thumb up-down each bot message.
+  - Stores history in the database; paginated history view.
+
+  UI components (ui/)
+  - Built on Radix UI: Button, Card, Badge, Input, Select, Dialog, Toast,
+    Progress, Tabs, Accordion, DropdownMenu, Tooltip, Avatar, Separator.
+  - Custom styled with TailwindCSS.
+
+================================================================================
+9. CORE FEATURES — IN-DEPTH EXPLANATION
+================================================================================
+
+9.1 AUTHENTICATION & ROLE-BASED ACCESS CONTROL
+-----------------------------------------------
+NoteFlow uses a dual-layer auth system:
+  Layer 1: Supabase Auth handles the actual JWT token creation and validation.
+           Students/professors sign up with email + password via Supabase.
+           Supabase returns an access_token (JWT) and refresh_token.
+  Layer 2: NoteFlow's own users table stores the role, full_name, and profile info.
+           On every API call, auth.middleware.js verifies the Supabase JWT and
+           cross-references with the local users table.
+
+Roles:
+  - "student"   : Can join classrooms, upload resources (pending approval),
+                  highlight PDFs, post discussions, take tests, claim bounties.
+  - "professor" : Can create classrooms, auto-approve uploads, verify resources,
+                  view analytics, moderate content, create exam sections,
+                  generate AI tests, approve/reject bounty submissions.
+
+9.2 CLASSROOMS
+--------------
+Classrooms are private spaces created by professors. Each classroom has:
+  - A unique 6-character alphanumeric invite code.
+  - A name, section (e.g., "Section A"), and optional description.
+  - A professor (owner) with full permissions.
+  - A list of enrolled students (classroom_members table).
+
+Flow:
+  Professor: Clicks "Create Classroom" → fills form → API call → classroom
+  created in DB → unique invite code generated (nanoid) → professor can
+  copy/share code with students.
+
+  Student: Clicks "Join Classroom" → enters 6-char code → API validates code
+  exists in classrooms table → inserts into classroom_members → student
+  immediately sees classroom in their list.
+
+9.3 SYLLABUS TREE
+-----------------
+Each classroom has exactly one syllabus (one-to-one relationship).
+The syllabus contains syllabus_nodes organised as a tree:
+  - Units (top-level, e.g., "Unit 1: Introduction to Algorithms")
+  - Topics (children of units, e.g., "1.1 Sorting Algorithms")
+  - Subtopics (children of topics, e.g., "1.1.1 Merge Sort")
+
+Professors create and manage the syllabus tree via the classroom Resources tab.
+Students browse the tree to find relevant resources.
+Resources are attached to specific syllabus_nodes.
+The has_resources flag on each node is auto-updated by DB trigger.
+The tree supports drag-and-drop reordering (order_index field).
+
+9.4 RESOURCE MANAGEMENT & FILE UPLOADS
+---------------------------------------
+Supported file types: PDF, DOCX, PPTX, TXT
+Maximum file size: 100MB (Supabase free tier: 50MB per file)
+
+Upload flow:
+  1. User clicks "Upload Resource" → drag-and-drop file area appears (react-dropzone).
+  2. Frontend sends multipart/form-data to POST /api/resources.
+  3. Multer parses the file in memory.
+  4. fileProcessor.js validates file type (MIME check) and size.
+  5. File is uploaded to Supabase Storage bucket "resources".
+  6. Thumbnail is generated (sharp) and uploaded as a separate file.
+  7. File metadata (title, description, tags, thumbnail_url, file_url) is
+     saved to the resources table.
+  8. Resource is automatically added to verification_queue (DB trigger).
+  9. Karma points (+10) are awarded to the uploader.
+  10. If professor uploaded → is_verified = TRUE immediately.
+      If student uploaded → is_verified = FALSE, shows "Pending Verification" badge.
+
+Versioning: resources.version INT is incremented when a resource is replaced.
+
+9.5 PDF VIEWER & HIGHLIGHTS
+-----------------------------
+When a user clicks a resource, they go to ResourceViewerPage.
+The PDF is rendered using react-pdf (wrapper around Mozilla PDF.js).
+Pages are lazy-loaded for performance.
+
+Highlighting:
+  - User selects text with mouse → highlight toolbar appears.
+  - User picks a color (yellow, pink, blue, green).
+  - On save, frontend sends: { resource_id, page_number, coordinates {x1,y1,x2,y2},
+    text_content, color } to POST /api/highlights.
+  - Coordinates are stored normalized (0-1 relative to page dimensions) for
+    resolution-independence.
+  - Highlights are rendered as colored overlays on the PDF page.
+  - Hovering a highlight shows who highlighted it and when.
+
+9.6 COLLABORATIVE HEATMAPS
+---------------------------
+The heatmap is a visual density map of all highlights by all classroom members.
+
+How it works:
+  1. Every time a highlight is saved, heatmapService.calculateHeatmap() is called.
+  2. All highlights for that resource page are fetched from the highlights table.
+  3. Overlapping coordinate regions are aggregated.
+  4. Intensity is normalized: 1-5 overlaps = low (yellow), 6-15 = medium (orange),
+     16+ = high (red).
+  5. Result is upserted into heatmap_data as aggregated_zones JSON array.
+  6. The result is cached per (resource_id, page_number).
+
+On the viewer:
+  - User clicks "Show Heatmap" toggle.
+  - Frontend fetches heatmap_data from GET /api/highlights/heatmap/:resourceId.
+  - Heatmap zones are rendered as semi-transparent colored rectangles on a
+    canvas layer overlaying the PDF page.
+  - Tooltip on hover shows: "X students highlighted this area".
+  - Toggle off hides the overlay without closing the PDF.
+
+Business rules:
+  - Heatmap includes ONLY highlights from classroom members.
+  - Updates within ~5 seconds of a new highlight being saved.
+  - The overlay is semi-transparent to not obscure the underlying text.
+
+9.7 THREADED DISCUSSIONS
+-------------------------
+Discussions are comments anchored to specific highlights or pages on a PDF.
+
+Posting a discussion:
+  1. User selects text or clicks a page location.
+  2. Popup shows "Discuss" button.
+  3. User types a comment → POST /api/discussions.
+  4. Discussion is stored with resource_id, page_number, position (x,y),
+     parent_id = NULL for top-level threads.
+
+Replies:
+  - Other users can reply by posting with parent_id set to the original discussion.
+  - This creates a threaded tree structure.
+
+Voting:
+  - PATCH /api/discussions/:id/vote with { vote_type: 'up' | 'down' }.
+  - Each user can vote once per discussion (UNIQUE constraint).
+  - +2 karma for original poster on upvote, -1 on downvote.
+  - Professor can mark a discussion as "helpful" (is_helpful = TRUE) → +5 karma.
+
+Moderation:
+  - Professors can soft-delete discussions (is_deleted = TRUE).
+  - Deleted discussions are hidden from students but logged in moderation_logs.
+
+9.8 KARMA & GAMIFICATION SYSTEM
+---------------------------------
+Karma is NoteFlow's reputation and engagement system.
+
+Points awarded:
+  Action                       Points
+  --------------------------   ------
+  Upload a resource            +10
+  Resource upvoted             +2
+  Resource downvoted           -1
+  Bounty fulfilled (approved)  +20
+  Discussion marked helpful    +5
+  Daily login streak           +1 per day
+  Professor verifies resource  +15
+  Spam penalty                 -50
+
+Level Thresholds:
+  Level 1: Novice       (0–100 pts)
+  Level 2: Contributor  (101–300 pts)
+  Level 3: Expert       (301–600 pts)
+  Level 4: Master       (601–1000 pts)
+  Level 5: Legend       (1001+ pts)
+
+When a user levels up:
+  - karmaEngine.js detects the new level > old level.
+  - A level-up notification is created.
+  - On the frontend, a confetti animation (react-confetti) plays.
+  - The progress bar on the profile page fills toward the next level.
+
+Login Streak:
+  - recordLoginStreak() checks if last_login was yesterday.
+  - If yes: streak incremented by 1.
+  - If not: streak resets to 1.
+  - If already logged in today: no change.
+  - At streak 7: "Streak Master" badge is awarded.
+
+Badge System:
+  - After every karma award, checkAndAwardBadges() runs.
+  - It checks all 11 badge criteria against the user's current stats.
+  - Any newly eligible badge is inserted into user_badges.
+  - A notification is created and optionally an email is sent.
+
+9.9 BOUNTY BOARD
+-----------------
+The Bounty Board enables resource crowdsourcing within a classroom.
+
+Creating a Bounty:
+  - Any classroom member (student or professor) can create a bounty.
+  - Fields: title, description, karma reward (points_reward), urgency flag,
+    optional link to a specific syllabus node, optional expiry date.
+  - Bounty starts with status = 'open'.
+
+Claiming a Bounty:
+  - A student clicks "Claim" on an open bounty.
+  - Status changes to 'claimed', claimer_id and claimed_at are set.
+  - No other student can claim a bounty already claimed.
+
+Submitting Fulfillment:
+  - The claimer uploads a resource file as fulfillment.
+  - A bounty_submissions record is created (status = 'pending').
+  - The bounty requester (or professor) is notified.
+
+Approving/Rejecting:
+  - Professor (or bounty creator) clicks Approve or Reject.
+  - Approve: bounty status → 'fulfilled'. Fulfiller earns bounty.points_reward karma.
+  - Reject: bounty status → 'open' again. Rejection reason sent as notification.
+
+Bounty statuses: open → claimed → fulfilled | rejected → open (on rejection)
+Also: 'closed' (manually closed), 'expired' (past expires_at date).
+
+9.10 AI CHATBOT
+----------------
+The AI chatbot is a floating widget (bottom-right of all authenticated pages).
+
+Two modes:
+  Mode 1 — OpenAI Mode (if OPENAI_API_KEY is configured):
+    - Uses GPT-3.5-turbo model.
+    - System prompt: NoteFlow platform context (features, rules, personality).
+    - Keeps last 6 turns of conversation for context window management.
+    - Max 500 tokens per response. Temperature 0.7 for conversational tone.
+    - Context injection: user's current classroom info can be prepended.
+
+  Mode 2 — Rule-Based FAQ Fallback (works without any API key):
+    - 10 pattern-matching rules covering common questions.
+    - Topics: joining classrooms, uploading resources, karma, heatmaps,
+      bounties, password reset, discussions, professor features, downloads, search.
+    - Matches by checking if any keyword from the pattern list appears in
+      the user's message (case-insensitive).
+    - If no pattern matches: shows default help message with category list.
+
+Chat history:
+  - All messages (user + assistant) are stored in chat_messages table.
+  - GET /api/chat/history returns paginated history.
+  - DELETE /api/chat/history clears all history for the user.
+  - PATCH /api/chat/:id/rate lets users rate each bot message (👍/👎).
+
+9.11 EXAM SECTIONS & REVISION TESTS
+--------------------------------------
+Each classroom has dedicated Midterm and Endterm exam sections.
+
+Exam Resources (Use Case 4.0):
+  Three resource types:
+    - PYQ (Previous Year Question Papers)
+    - Important Questions (curated list of likely exam questions)
+    - Quick Revision (condensed notes/cheat sheets)
+
+  Student upload flow:
+    1. Student uploads file + selects resource_type + enters year and description.
+    2. Resource saved with status = 'pending'.
+    3. Professor receives notification to review.
+    4. Professor approves → status = 'approved', resource visible to all students,
+       student earns +15 karma.
+    5. Professor rejects → status = 'rejected', student gets rejection reason.
+  
+  Professor upload: Auto-approved. Instantly visible to all students.
+
+AI-Generated Revision Tests (Use Case 5.0):
+  1. Professor selects exam resource(s) (PDF files).
+  2. fileProcessor.extractText() pulls text from the PDFs.
+  3. Professor sets: question count, difficulty, topic focus.
+  4. POST /api/exam/sections/:sectionId/tests/generate is called.
+  5. aiService.generateTestFromContext() sends extracted text to GPT-3.5-turbo.
+  6. AI returns strict JSON: { title, description, duration_mins, topics_covered,
+     questions: [{ question, options: [{id,text}x4], correct_opt, explanation }] }
+  7. Test and questions are saved to revision_tests and test_questions tables.
+  8. Test becomes visible in the Revision Tests tab.
+
+Taking a Test:
+  1. Student clicks test → sees: title, duration, question count, topics.
+  2. Clicks "Start Test" → timer begins (server time synced).
+  3. Questions shown one at a time, student selects A/B/C/D.
+  4. Navigation: Next/Previous/Question map panel.
+  5. Auto-save every 30 seconds (prevents data loss).
+  6. Submit or timer expires → answers sent to PATCH /api/exam/attempts/:id/submit.
+  7. Backend grades: counts correct answers, calculates percentage.
+  8. Karma awarded based on score:
+       90-100% → +20 pts, 75-89% → +15 pts, 60-74% → +10 pts, <60% → +5 pts.
+  9. Results page: score, correct/incorrect breakdown, explanations per question.
+
+Test rules:
+  - Max 3 attempts per student per test.
+  - Best score is recorded for leaderboard.
+  - Questions randomized on each attempt (anti-cheating).
+  - Students cannot view correct answers until submission.
+
+9.12 PROFESSOR ANALYTICS DASHBOARD
+-------------------------------------
+Accessible at /classrooms/:classroomId/professor (professors only).
+
+Data visualized:
+  - Engagement Over Time: Line chart showing daily/weekly counts of views,
+    downloads, uploads, discussions, and highlights. Powered by Recharts.
+  - Resource Quality Scores: Bar chart ranking all classroom resources by a
+    composite quality score (views + downloads + discussions + highlights).
+  - Student Activity Table: Per-student breakdown of activity metrics.
+  - Heatmap Insights: Which resources and which pages have the most highlights.
+  - Bounty Statistics: Open vs. fulfilled vs. expired bounties.
+  - Verification Queue: List of student-uploaded resources pending review.
+    Professor clicks Approve/Reject directly from this panel.
+  - Moderation Panel: Flag users, restrict users, delete discussions.
+
+All data sourced from analytics_events table and aggregated queries across
+resources, discussions, highlights, and karma_transactions.
+
+9.13 MODERATION & VERIFICATION
+--------------------------------
+Verification (Resource Quality Control):
+  - Every uploaded resource is auto-enqueued in verification_queue (DB trigger).
+  - Professors see the queue in their analytics dashboard.
+  - Approve: is_verified = TRUE on resource, record in moderation_logs,
+    uploader gets +15 karma (professor_verify action).
+  - Reject: reject_reason saved, resource remains unverified, uploader notified.
+  - Verified resources get a "Professor Verified ✅" badge in the UI.
+
+Moderation Actions:
+  - Delete Resource: is_deleted = TRUE (soft delete). Resource hidden from students.
+  - Restore Resource: is_deleted = FALSE.
+  - Flag User: is_flagged = TRUE, flag_reason saved. Flagged users visible to moderators.
+  - Restrict User: is_restricted = TRUE. Restricted users cannot upload or post.
+  - Delete Discussion: is_deleted = TRUE on discussion.
+  All actions logged in moderation_logs with moderator_id, action, target, reason.
+
+9.14 EMAIL NOTIFICATIONS
+--------------------------
+emailService.js uses Nodemailer. Supports:
+  - Gmail App Password (GMAIL_USER + GMAIL_APP_PASS env vars)
+  - Generic SMTP (EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS)
+
+Email is sent for:
+  - Badge earned (badge_earned type)
+  - Bounty approved (bounty_approved type)
+  - Professor verification (professor_verify type)
+
+Email is NOT required for the app to function. If email config is missing,
+karmaEngine.js logs a warning and continues without failing.
+
+================================================================================
+10. USE CASES (ALL 5 OFFICIAL USE CASES)
+================================================================================
+
+USE CASE 1.0 — Create Private Classroom
+-----------------------------------------
+Actor: Professor
+Goal: Create a private classroom with a unique 6-digit invite code.
+Preconditions: Professor logged in, email verified, has professor role.
+Normal Flow:
+  1. Professor clicks "Create Classroom" on dashboard.
+  2. Fills in course name, code, semester, description.
+  3. System validates input, creates classroom in DB.
+  4. Unique 6-digit invite code is generated.
+  5. Success message shown with invite code.
+  6. Professor redirected to new classroom dashboard.
+Alternative Flows:
+  - Professor cancels → data discarded, returns to dashboard.
+  - Professor clicks "Copy Code" → code copied to clipboard.
+Exceptions:
+  - Invalid input → error highlighting missing fields.
+  - DB error → "Unable to create classroom" message.
+Business Rules:
+  - Only professors can create classrooms.
+  - Invite codes: exactly 6 chars, globally unique.
+  - Classroom names unique per professor account.
+Priority: High | Frequency: 2-3 times/semester/professor | Response: <2 seconds
+
+USE CASE 2.0 — Upload File with Metadata Tagging
+---------------------------------------------------
+Actor: Professor, Student (Harshitha - 24CSB0B85)
+Goal: Upload an educational file and link it to the syllabus tree.
+Preconditions: User logged in, classroom member, syllabus exists.
+Normal Flow:
+  1-4: User navigates to classroom, clicks "Upload", selects/drags file.
+  5. File type and size validated (max 100MB, PDF/DOCX/PPTX/TXT).
+  6-8. Metadata form: title, description, tags, syllabus unit/topic.
+  9. User clicks "Upload".
+  10-15. System: shows progress, uploads to cloud, virus scans, generates
+         thumbnail, compresses, saves metadata to DB.
+  16-18. Karma awarded (+10). Success message. File listing updated.
+Business Rules:
+  - Supported types: PDF, DOCX, PPTX, TXT. Max size: 100MB.
+  - All files must pass virus scanning.
+  - Users earn 10 karma per successful upload.
+  - Professor uploads receive automatic verification badge.
+Special Requirements:
+  - Real-time progress indicator.
+  - File processing must complete within 30 seconds.
+  - Resumable uploads for files >10MB.
+
+USE CASE 3.0 — View Collaborative Heatmap on Document
+-------------------------------------------------------
+Actor: Professor, Student (Yajat - 24CSB0B86)
+Goal: View a PDF with a heatmap overlay showing class highlight density.
+Preconditions: User logged in, in classroom, PDF exists, ≥1 highlight exists.
+Normal Flow:
+  1-4: Navigate to classroom, click PDF, viewer opens with lazy loading.
+  5. Click "Show Heatmap" toggle.
+  6-9. System fetches aggregated highlights, calculates intensity, renders
+       semi-transparent gradient overlay.
+  10-11. User hovers area → tooltip shows highlight count and users.
+  12-13. User navigates pages → heatmap updates per page.
+Heatmap Colors:
+  - Light yellow: 1-5 highlights
+  - Orange: 6-15 highlights
+  - Red: 16+ highlights (hot spot)
+Business Rules:
+  - Only highlights from classroom members counted.
+  - Updates within 5 seconds of new highlight.
+  - Semi-transparent overlay (does not obscure text).
+  - Tooltip response <200ms. Handles up to 1000 highlights efficiently.
+
+USE CASE 4.0 — Upload Exam Resources to Exam Section
+------------------------------------------------------
+Actor: Student (SangramReddy - 24CSB0B84), Professor
+Goal: Upload exam preparation materials to Midterm or Endterm section.
+Types: PYQ, Important Questions, Quick Revision.
+Normal Flow:
+  1-8. Student navigates to exam section, selects exam type, uploads file,
+       enters metadata (year, topic coverage), clicks "Submit for Approval".
+  9-12. System validates, uploads, creates "Pending Approval" DB entry,
+        notifies professor.
+  14-19. Professor reviews, approves → status 'Approved', student gets +15 karma,
+         visible to all students.
+Alternative Flows:
+  - Professor uploads directly → auto-approved, instantly visible.
+  - Professor rejects → reason sent to student, not visible.
+  - Student edits pending upload → resubmit.
+Business Rules:
+  - Student uploads require professor approval.
+  - Professor uploads auto-approved.
+  - Approved student uploads earn 15 karma.
+  - Max 5 resources per student per exam section.
+  - PDF and document formats only.
+  - Professor must review within 48 hours (reminder if 10+ pending).
+
+USE CASE 5.0 — Take Revision Test
+-----------------------------------
+Actor: Student (Charana)
+Goal: Take a timed multiple-choice revision test and get scored feedback.
+Preconditions: Student logged in, revision test available in exam section.
+Normal Flow:
+  1-5. Navigate to exam section, select test, view details.
+  6-10. Click "Start Test" → instructions + timer displayed → "Begin" → countdown starts.
+  11-14. Answer questions one by one, navigate with Next/Previous.
+  15-17. Click "Submit Test" → confirmation prompt → confirm.
+  18-23. System stops timer, evaluates answers, calculates score, shows results
+         with correct/incorrect breakdown and explanations.
+         Awards karma (5-20 pts based on score). Saves attempt history.
+Alternative Flows:
+  - Pause/Resume test.
+  - Navigate between questions (question map).
+  - Review answers summary before submission.
+  - Timer expires → auto-submit.
+Exceptions:
+  - Connection lost → progress saved locally, synced on reconnect.
+  - Browser crash → incomplete test detected on return, resume or abandon.
+  - Navigate away warning → test paused and saved.
+Business Rules:
+  - Max 3 attempts per test. Best score on leaderboard.
+  - Karma: 20pts (90-100%), 15pts (75-89%), 10pts (60-74%), 5pts (<60%).
+  - Questions randomized. Cannot view answers until submitted.
+  - Auto-submit on timer expiry.
+  - Auto-save every 30 seconds.
+  - Must handle 100+ concurrent test-takers.
+
+================================================================================
+11. API REFERENCE (ALL ENDPOINTS)
+================================================================================
+
+Base URL (Dev):  http://localhost:3001/api
+Base URL (Prod): https://noteflow-api.onrender.com/api
+
+All protected endpoints require: Authorization: Bearer <token>
+
+AUTH
+  POST /auth/signup           — { email, password, full_name, role }
+  POST /auth/login            — { email, password }
+  GET  /auth/me               — returns current user profile
+  POST /auth/reset-password   — { email }
+
+CLASSROOMS
+  GET  /classrooms            — list user's classrooms
+  POST /classrooms            — { name, section, description } (professor)
+  GET  /classrooms/:id        — classroom details
+  POST /classrooms/join       — { invite_code } (student)
+
+SYLLABUS
+  GET    /syllabus/:classroomId          — full tree with nodes
+  POST   /syllabus/:classroomId          — { node_type, title, parent_id, order_index }
+  PATCH  /syllabus/node/:nodeId          — update node title or order
+  DELETE /syllabus/node/:nodeId          — delete node (professor)
+
+RESOURCES
+  GET    /resources/:classroomId         — list resources (filtered by node)
+  POST   /resources                      — multipart/form-data upload
+  GET    /resources/:id/view             — get file URL
+  DELETE /resources/:id                  — soft-delete
+
+HIGHLIGHTS
+  GET    /highlights/:resourceId         — all highlights for resource
+  POST   /highlights                     — { resource_id, page_number, coordinates, text_content, color }
+  DELETE /highlights/:id                 — delete highlight
+  GET    /highlights/heatmap/:resourceId — heatmap_data zones per page
+
+DISCUSSIONS
+  GET    /discussions/:resourceId        — threaded discussions (by page)
+  POST   /discussions                    — { resource_id, content, page_number, position, parent_id }
+  PATCH  /discussions/:id/vote           — { vote_type: 'up'|'down' }
+  PATCH  /discussions/:id/helpful        — mark as helpful (professor)
+  DELETE /discussions/:id                — soft-delete (professor)
+
+KARMA
+  GET    /karma/:userId                  — karma summary (total, level, progress, badges)
+  GET    /karma/:userId/history          — karma transaction ledger
+  GET    /karma/leaderboard/:classroomId — top users by karma in classroom
+
+BOUNTIES
+  GET    /bounties/:classroomId          — list bounties (filter by status)
+  POST   /bounties                       — { title, description, points_reward, is_urgent, syllabus_node_id, expires_at }
+  PATCH  /bounties/:id/claim             — claim bounty (claimer_id = current user)
+  POST   /bounties/:id/submit            — { resource_id, note }
+  PATCH  /bounties/:id/review            — { status: 'approved'|'rejected', reason }
+
+ANALYTICS (professor only)
+  GET    /analytics/:classroomId         — full analytics package
+  GET    /analytics/:classroomId/engagement — time-series engagement data
+  GET    /analytics/:classroomId/resources  — resource quality rankings
+  GET    /analytics/:classroomId/heatmap    — heatmap insights across resources
+
+VERIFICATION (professor only)
+  GET    /verify/queue                   — pending resources for verification
+  PATCH  /verify/:resourceId             — { status: 'approved'|'rejected', reason }
+
+MODERATION (professor only)
+  POST   /moderate/resource/:id          — { action: 'delete'|'restore' }
+  POST   /moderate/user/:id             — { action: 'flag'|'unflag'|'restrict', reason }
+  POST   /moderate/discussion/:id        — { action: 'delete' }
+
+CHAT
+  POST   /chat                           — { message, context? }
+  GET    /chat/history                   — ?page=1&limit=20
+  DELETE /chat/history                   — clear all chat history
+  PATCH  /chat/:id/rate                  — { rating: 'up'|'down' }
+
+EXAM
+  GET    /exam/:classroomId/sections     — get both exam sections
+  POST   /exam/:classroomId/sections     — { exam_type, title, description } (professor)
+  GET    /exam/sections/:sectionId/resources
+  POST   /exam/sections/:sectionId/resources  — multipart/form-data
+  PATCH  /exam/resources/:id/review      — { status, reason } (professor)
+  GET    /exam/sections/:sectionId/tests
+  POST   /exam/sections/:sectionId/tests/generate  — { prompt, resource_ids } (professor)
+  POST   /exam/tests/:testId/attempt     — start attempt
+  PATCH  /exam/attempts/:attemptId/submit — { answers: {q_id: opt_id} }
+  GET    /exam/attempts/:attemptId/results
+
+HEALTH
+  GET    /health                         — { status, timestamp, env, ai }
+
+================================================================================
+12. ENVIRONMENT VARIABLES
+================================================================================
+
+SERVER (.env in server/)
+------------------------
+  DATABASE_URL               PostgreSQL connection string (Neon DB)
+                             Format: postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+  SUPABASE_URL               Supabase project URL (https://xxx.supabase.co)
+  SUPABASE_SERVICE_ROLE_KEY  Supabase service role secret key (server-side only!)
+  PORT                       Server port (default: 3001)
+  NODE_ENV                   development | production
+  CLIENT_URL                 Frontend URL for CORS (http://localhost:5173 in dev)
+  JWT_SECRET                 Random string (min 32 chars) for JWT signing
+  OPENAI_API_KEY             OpenAI API key (optional — fallback works without)
+  OPENAI_MODEL               GPT model (default: gpt-3.5-turbo)
+  OPENAI_MAX_TOKENS          Max response tokens (default: 500)
+  GMAIL_USER                 Gmail address for email notifications (optional)
+  GMAIL_APP_PASS             Gmail App Password 16-char (optional)
+  EMAIL_FROM                 From address for emails (optional)
+  REDIS_URL                  Redis connection URL (optional — caching)
+  SENTRY_DSN                 Sentry error tracking DSN (optional)
+
+CLIENT (.env in client/)
+------------------------
+  VITE_API_URL               Backend API base URL (http://localhost:3001 in dev)
+  VITE_SUPABASE_URL          Supabase project URL (same as server)
+  VITE_SUPABASE_ANON_KEY     Supabase public/anon key (safe to expose in browser)
+
+================================================================================
+13. DATABASE MIGRATIONS (ALL 9 FILES)
+================================================================================
+
+Migrations are run in order via: cd server && node run-migrations.js
+
+  001_initial_schema.sql
+    - Creates extensions: uuid-ossp, pgcrypto.
+    - Creates tables: users, classrooms, classroom_members.
+    - Creates: update_updated_at_column() function and users trigger.
+    - Creates indexes on all key columns.
+
+  002_syllabus_resources.sql
+    - Creates tables: syllabus, syllabus_nodes, resources.
+    - Creates triggers: update_node_has_resources (insert + delete on resources).
+    - Auto-updates has_resources flag on syllabus_nodes.
+
+  003_file_management.sql
+    - Adds file versioning, file processing metadata, and tag support.
+    - Creates resource-related tables for upload tracking.
+
+  004_heatmaps_discussions.sql
+    - Creates tables: highlights, heatmap_data, discussions, discussion_votes.
+    - Creates triggers for discussions.updated_at.
+
+  005_bounty_karma.sql
+    - Creates tables: badges, user_karma, karma_transactions, user_badges,
+      bounties, bounty_submissions, notifications.
+    - Seeds all 11 badges with criteria JSON.
+    - Creates triggers for user_karma and bounties updated_at.
+
+  006_analytics_moderation.sql
+    - Creates tables: analytics_events, verification_queue, moderation_logs.
+    - Adds columns to resources: is_deleted, deleted_at, deleted_by, view_count.
+    - Adds columns to discussions: is_deleted, is_helpful.
+    - Adds columns to users: is_flagged, is_restricted, flag_reason.
+    - Creates trigger: trg_enqueue_verification (auto-adds resource to queue).
+
+  007_add_user_karma_columns.sql
+    - Adds any missing karma-related columns to the users table for convenience.
+
+  008_chat_messages.sql
+    - Creates table: chat_messages (user_id, role, content, rating).
+    - Stores entire chat history for each user.
+
+  009_exam_sections.sql
+    - Creates tables: exam_sections, exam_resources, revision_tests,
+      test_questions, test_attempts.
+    - Creates triggers for updated_at on all new tables.
+
+================================================================================
+14. SECURITY
+================================================================================
+
+  JWT Authentication
+    - All protected routes require "Authorization: Bearer <token>" header.
+    - Tokens are generated by Supabase Auth and validated on each request.
+    - Token expiry handled by Supabase (configurable, typically 1 hour).
+    - Refresh tokens allow session continuation without re-login.
+
+  Role-Based Access Control (RBAC)
+    - role.middleware.js enforces professor-only routes.
+    - professor-only: classroom creation, analytics, moderation, verification,
+      auto-approving resources, generating AI tests.
+    - student-only restrictions: cannot access other students' private data.
+
+  Helmet.js Security Headers
+    - Content-Security-Policy (CSP): restricts script/style/font/image/connect sources.
+    - HSTS (HTTP Strict Transport Security): enforces HTTPS in production.
+    - X-Frame-Options: prevents clickjacking.
+    - X-Content-Type-Options: prevents MIME sniffing.
+    - Referrer-Policy: controls referrer header leakage.
+    - Note: crossOriginEmbedderPolicy is disabled (required for PDF.js).
+
+  Rate Limiting
+    - Auth endpoints: 20 requests per 15 minutes per IP.
+    - Chat endpoints: 30 messages per minute per user.
+    - Prevents brute-force and API abuse.
+
+  Input Validation
+    - express-validator validates all request bodies.
+    - File type validation via MIME type checking (file-type package).
+    - SQL injection prevented by parameterized queries ($1, $2, ...) via pg.
+    - No raw string interpolation in SQL queries.
+
+  CORS
+    - Restricted to known origins (localhost + CLIENT_URL env var).
+    - credentials: true allows cookies/auth headers.
+
+  HTTPS
+    - Enforced in production via redirect middleware.
+    - Vercel and Render both provide automatic HTTPS certificates.
+
+  Secrets Management
+    - .env files never committed (in .gitignore).
+    - Production secrets set via Render dashboard / Vercel env vars.
+    - Supabase service role key only used server-side (never exposed to browser).
+    - Browser uses only the anon/public Supabase key.
+
+================================================================================
+15. TESTING STRATEGY
+================================================================================
+
+SERVER TESTS (Jest + Supertest)
+--------------------------------
+Location: server/src/__tests__/
+Command:  cd server && npm test
+Coverage: cd server && npm run test:coverage
+
+  - Tests use Jest 29.7.0 and Supertest 6.3.4.
+  - PostgreSQL database is fully mocked (no real DB calls in tests).
+  - Supabase client is mocked (no real Supabase calls).
+  - OpenAI API is mocked (no real API calls or costs in tests).
+  - Tests are isolated and deterministic.
+  - Test files match pattern: **/__tests__/**/*.test.js
+  - Timeout: 15 seconds per test.
+  - Setup: dotenv/config is loaded automatically in Jest setup.
+
+CLIENT TESTS (Vitest + React Testing Library)
+----------------------------------------------
+Location: client/src/__tests__/
+Command:  cd client && npm test
+Coverage: cd client && npm run test:coverage
+
+  - Tests use Vitest 1.6.0 (Vite-native, much faster than Jest for frontend).
+  - React Testing Library (RTL) for component rendering and interaction.
+  - jsdom provides a virtual DOM environment.
+  - @testing-library/jest-dom provides custom matchers (toBeInTheDocument, etc.).
+  - vitest.setup.js imports @testing-library/jest-dom.
+  - API calls (Axios) are mocked in tests.
+  - Supabase client is mocked.
+
+Both test suites are run by GitHub Actions CI on every push.
+
+================================================================================
+16. DEPLOYMENT
+================================================================================
+
+FRONTEND → VERCEL (Free Tier)
+------------------------------
+Configuration: vercel.json at project root.
+  - Root directory: client/
+  - Build command: npm run build
+  - Output directory: dist/
+  - Vite builds a static React SPA.
+  - All routes redirect to index.html (SPA routing).
+  - API calls proxied via vercel.json rewrites to backend URL.
+
+Steps:
+  1. Push code to GitHub.
+  2. Import repo on vercel.com.
+  3. Set root directory: client.
+  4. Add env vars: VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
+  5. Deploy. Vercel auto-deploys on every push to main.
+
+BACKEND → RENDER (Free Tier, Oregon Region)
+--------------------------------------------
+Configuration: render.yaml at project root.
+  Service type: Web Service
+  Build command: cd server && npm install
+  Start command: cd server && npm start
+  Health check path: /api/health
+  Auto-deploy: true (deploys on every GitHub push)
+
+Steps:
+  1. Import repo on render.com.
+  2. Connect GitHub repository.
+  3. Set all environment variables from render.yaml list.
+  4. Create web service.
+  5. After deploy, get Render URL (e.g. https://noteflow-api.onrender.com).
+  6. Update vercel.json with the Render URL.
+  7. Redeploy on Vercel.
+
+DATABASE → NEON DB (Free Tier)
+--------------------------------
+  - Serverless PostgreSQL, auto-scales.
+  - Free tier: 0.5GB storage.
+  - Connection via pooled connection string with SSL required.
+  - Run migrations once after initial setup: node run-migrations.js in server/.
+
+FILE STORAGE → SUPABASE (Free Tier)
+--------------------------------------
+  - S3-compatible storage, 1GB free.
+  - One bucket named "resources" (public access for viewing).
+  - Storage policies configured via supabase_bucket_setup.sql.
+  - Files uploaded via supabase-js SDK with service role key (server-side).
+  - Files accessed via public URL or signed URL (client-side).
+
+================================================================================
+17. CI/CD PIPELINE
+================================================================================
+
+File: .github/workflows/ci.yml
+Trigger: Every push to any branch and every pull request.
+
+Pipeline steps:
+  1. Checkout repository
+  2. Setup Node.js 20.x
+  3. Install server dependencies (cd server && npm install)
+  4. Run server tests (cd server && npm test)
+  5. Install client dependencies (cd client && npm install)
+  6. Run client tests (cd client && npm test)
+  7. Build client production bundle (cd client && npm run build)
+  8. Run ESLint check (cd client && npm run lint)
+
+All steps must pass for the CI to be green. Failing CI blocks merges.
+No external service credentials needed for CI (all mocked).
+
+================================================================================
+18. KNOWN LIMITATIONS & NOTES
+================================================================================
+
+  Render Free Tier Cold Starts
+    - After 15 minutes of inactivity, the first request takes ~30 seconds.
+    - Workaround: Use an uptime monitor (e.g., UptimeRobot) to ping /api/health.
+    - Fix: Upgrade to Render's paid plan ($7/month).
+
+  OpenAI Free Credits
+    - GPT-3.5-turbo requires a paid OpenAI account or free trial credits.
+    - The FAQ fallback works perfectly without any API key.
+    - AI test generation REQUIRES an OpenAI key (no fallback for test generation).
+
+  Supabase 50MB File Limit
+    - Free tier limits individual file uploads to 50MB.
+    - Large PDFs may need to be compressed before upload.
+    - Workaround: fileProcessor.js handles compression during upload.
+
+  Neon DB 0.5GB Storage
+    - Free tier. Monitor usage via Neon console.
+    - Each classroom's resources metadata adds up. Binary files go to Supabase.
+
+  Redis Caching
+    - Optional. Without Redis, API responses are not cached.
+    - App works fine without it for development and small deployments.
+    - Recommended for production with high user counts.
+
+  Email Delivery
+    - Gmail may rate-limit high-volume sending.
+    - For production, switch to SendGrid, Resend, or Mailgun free tiers.
+
+  Virus Scanning
+    - The current fileProcessor.js checks file types but does NOT do real
+      antivirus scanning (no ClamAV integration). This is a planned feature.
+
+  Heatmap Performance
+    - With 1000+ highlights per page, heatmap calculation may be slow.
+    - Caching in heatmap_data table mitigates this.
+    - Consider background jobs for recalculation in production.
+
+================================================================================
+19. COMMON ERRORS & FIXES
+================================================================================
+
+  Error: "Cannot find module '../config/db'"
+  Fix: Run npm install in server/
+
+  Error: "Invalid token" on API calls
+  Fix: Check JWT_SECRET is set in server/.env
+
+  Error: "CORS error" in browser
+  Fix: Check CLIENT_URL in server/.env matches your frontend URL exactly.
+
+  Error: "relation does not exist" (DB error)
+  Fix: Run node run-migrations.js in server/
+
+  Error: Chat widget not appearing
+  Fix: You must be logged in. ChatWidget renders only inside Layout (authenticated routes).
+
+  Error: OpenAI API key not working
+  Fix: Key may be expired or have no credits. Chatbot auto-falls back to FAQ mode.
+       Test with GET /api/health — if ai: "rule-based", fallback is active.
+
+  Error: Vitest tests failing
+  Fix: Run npm install in client/ to get all testing dependencies.
+
+  Error: Jest tests failing
+  Fix: Run npm install in server/ to get Jest + Supertest.
+
+  Error: "File type not supported"
+  Fix: Only PDF, DOCX, PPTX, TXT files are accepted.
+
+  Error: Supabase "storage object not found"
+  Fix: Run supabase_bucket_setup.sql in Supabase SQL Editor and ensure
+       the "resources" bucket is created and set to public.
+
+  Error: "Rate limit exceeded"
+  Fix: Auth endpoints: wait 15 minutes. Chat: wait 1 minute.
+       In dev, rate limits can be temporarily increased in rateLimit.middleware.js.
+
+================================================================================
+20. KARMA POINTS LEDGER & BADGE SYSTEM
+================================================================================
+
+KARMA POINTS TABLE
+-------------------
+  Action                    Points
+  ----------------------    ------
+  Upload a resource          +10
+  Resource upvoted           +2
+  Resource downvoted         -1
+  Bounty fulfilled           +20
+  Discussion marked helpful  +5
+  Daily login streak         +1 per consecutive day
+  Professor verifies resource +15
+  Spam penalty               -50
+  Bounty create              0 (no points for creating)
+  Badge bonus                0 (badges don't directly award points)
+  Manual adjustment          0 (admin override)
+
+Note: Total karma floor is 0 (GREATEST(0, total_points + delta) in SQL).
+
+LEVEL SYSTEM
+-------------
+  Level  Name          Min Points  Max Points
+  -----  -----------   ----------  ----------
+    1    Novice               0         100
+    2    Contributor        101         300
+    3    Expert             301         600
+    4    Master             601        1000
+    5    Legend            1001        ∞
+
+Progress percentage = ((current - levelMin) / (nextLevelMin - levelMin)) * 100
+
+BADGE CATALOG (11 Badges)
+--------------------------
+  Name               Icon  Rarity     Criteria
+  -----------------  ----  ---------  ----------------------------------------
+  Getting Started    🚀    common     Upload 1 resource
+  Contributor        📚    common     Upload 10 resources
+  Knowledge Sharer   🎓    rare       Upload 50 resources
+  Helper             🤝    common     Fulfill 1 bounty
+  Bounty Hunter      🏹    rare       Fulfill 5 bounties
+  Legendary Hunter   ⚡    legendary  Fulfill 20 bounties
+  Certified          ✅    rare       1 professor-verified resource
+  Popular            🔥    rare       Receive 50 upvotes
+  Wise One           🦉    legendary  10 discussions marked helpful
+  Streak Master      📅    common     7-day login streak
+  Legend             👑    legendary  Reach Level 5 (1000+ karma)
+
+Rarities: common (white), rare (blue), legendary (gold/purple)
+
+Badge awarding is automatic — no user action needed. After every karma
+event, the system checks all unelearned badges against the user's current stats.
+
+================================================================================
+                         END OF DOCUMENTATION
+                    NoteFlow v1.0 — Team 27 — January 2026
+================================================================================
