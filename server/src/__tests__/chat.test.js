@@ -3,9 +3,13 @@
  * chat.test.js
  * Tests the AI chatbot API endpoints.
  * DB is mocked; aiService is mocked to avoid real OpenAI calls in tests.
+ * Supabase is mocked so auth middleware never hits the network.
+ * The auth middleware flow:
+ *   1. supabaseAdmin.auth.getUser(token)  → mocked to return fake user
+ *   2. query('SELECT ... FROM users WHERE id = $1') → must be first DB mock call
+ *   3. actual controller DB calls follow
  */
 const request = require('supertest');
-const jwt = require('jsonwebtoken');
 
 // ── Mock DB and AI service ─────────────────────────────────────────────────────
 jest.mock('../config/db', () => ({ query: jest.fn() }));
@@ -13,20 +17,38 @@ jest.mock('../services/aiService', () => ({
   getChatResponse: jest.fn().mockResolvedValue('This is a mocked AI response.'),
 }));
 
+// ── Mock Supabase so auth middleware never hits the network ───────────────────
+jest.mock('../config/supabase', () => ({
+  supabaseAdmin: {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'user-test-001', email: 'test@example.com' } },
+        error: null,
+      }),
+    },
+  },
+}));
+
 const { query } = require('../config/db');
 const { getChatResponse } = require('../services/aiService');
 const app = require('../index');
 
-// ── Generate a valid JWT for test requests ────────────────────────────────────
-function makeToken(userId = 'user-test-001') {
-  return jwt.sign(
-    { id: userId, email: 'test@example.com', role: 'student' },
-    process.env.JWT_SECRET || 'test-secret',
-    { expiresIn: '1h' }
-  );
+// ── DB stub for auth middleware's user-profile lookup ─────────────────────────
+// The authenticate middleware does: query('SELECT ... FROM users WHERE id=$1')
+// This must be the FIRST mock call for every authenticated request.
+function stubAuthUser(role = 'student') {
+  query.mockResolvedValueOnce({
+    rows: [{
+      id: 'user-test-001',
+      email: 'test@example.com',
+      full_name: 'Test User',
+      role,
+    }],
+  });
 }
 
-const AUTH = () => `Bearer ${makeToken()}`;
+// Use a dummy Bearer token (value doesn't matter — Supabase is mocked)
+const FAKE_TOKEN = 'Bearer test-token-chat';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -38,23 +60,26 @@ describe('POST /api/chat', () => {
   });
 
   it('returns 400 when message is empty', async () => {
+    stubAuthUser();
     const res = await request(app)
       .post('/api/chat')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ message: '   ' });
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
   });
 
   it('returns 400 when message exceeds 1000 chars', async () => {
+    stubAuthUser();
     const res = await request(app)
       .post('/api/chat')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ message: 'x'.repeat(1001) });
     expect(res.status).toBe(400);
   });
 
   it('returns the AI reply on valid message', async () => {
+    stubAuthUser();
     // Mock: history fetch → empty, insert user msg, insert assistant msg
     query
       .mockResolvedValueOnce({ rows: [] })          // history fetch
@@ -65,7 +90,7 @@ describe('POST /api/chat', () => {
 
     const res = await request(app)
       .post('/api/chat')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ message: 'What are karma points?' });
 
     expect(res.status).toBe(200);
@@ -75,6 +100,7 @@ describe('POST /api/chat', () => {
   });
 
   it('uses classroom context when classroom_id is provided', async () => {
+    stubAuthUser();
     query
       .mockResolvedValueOnce({ rows: [] })           // history
       .mockResolvedValueOnce({                        // classroom context
@@ -87,7 +113,7 @@ describe('POST /api/chat', () => {
 
     const res = await request(app)
       .post('/api/chat')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ message: 'What resources are available?', classroom_id: 'uuid-classroom' });
 
     expect(res.status).toBe(200);
@@ -107,6 +133,7 @@ describe('GET /api/chat/history', () => {
   });
 
   it('returns paginated history array', async () => {
+    stubAuthUser();
     const fakeMessages = [
       { id: '1', role: 'user', content: 'hello', rating: null, created_at: new Date().toISOString() },
       { id: '2', role: 'assistant', content: 'hi there', rating: true, created_at: new Date().toISOString() },
@@ -117,7 +144,7 @@ describe('GET /api/chat/history', () => {
 
     const res = await request(app)
       .get('/api/chat/history')
-      .set('Authorization', AUTH());
+      .set('Authorization', FAKE_TOKEN);
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('messages');
@@ -135,10 +162,11 @@ describe('DELETE /api/chat/history', () => {
   });
 
   it('clears history and returns success', async () => {
+    stubAuthUser();
     query.mockResolvedValueOnce({ rows: [] });
     const res = await request(app)
       .delete('/api/chat/history')
-      .set('Authorization', AUTH());
+      .set('Authorization', FAKE_TOKEN);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('success', true);
   });
@@ -152,27 +180,30 @@ describe('PATCH /api/chat/:messageId/rate', () => {
   });
 
   it('returns 400 when rating is not boolean', async () => {
+    stubAuthUser();
     const res = await request(app)
       .patch('/api/chat/msg-1/rate')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ rating: 'yes' });
     expect(res.status).toBe(400);
   });
 
   it('returns 404 when message does not exist for user', async () => {
+    stubAuthUser();
     query.mockResolvedValueOnce({ rows: [] }); // no rows updated
     const res = await request(app)
       .patch('/api/chat/msg-not-mine/rate')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ rating: true });
     expect(res.status).toBe(404);
   });
 
   it('rates a message successfully', async () => {
+    stubAuthUser();
     query.mockResolvedValueOnce({ rows: [{ id: 'msg-001' }] });
     const res = await request(app)
       .patch('/api/chat/msg-001/rate')
-      .set('Authorization', AUTH())
+      .set('Authorization', FAKE_TOKEN)
       .send({ rating: false });
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('success', true);

@@ -2,13 +2,27 @@
 /**
  * auth.test.js
  * Tests authentication endpoints using mocked DB to avoid hitting production.
- * Strategy: mock '../config/db' so no real DB calls are made.
+ * Strategy: mock '../config/db' AND '../config/supabase' so no real network
+ * calls are made. The auth middleware calls supabaseAdmin.auth.getUser(token)
+ * — if not mocked it tries to reach placeholder.supabase.co and returns 401.
  */
 const request = require('supertest');
 
 // ── Mock the DB module before requiring app ────────────────────────────────────
 jest.mock('../config/db', () => ({
   query: jest.fn(),
+}));
+
+// ── Mock Supabase so auth middleware never hits the network ───────────────────
+jest.mock('../config/supabase', () => ({
+  supabaseAdmin: {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'uuid-123', email: 'test@example.com' } },
+        error: null,
+      }),
+    },
+  },
 }));
 
 const { query } = require('../config/db');
