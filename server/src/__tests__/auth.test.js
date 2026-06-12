@@ -21,6 +21,20 @@ jest.mock('../config/supabase', () => ({
         data: { user: { id: 'uuid-123', email: 'test@example.com' } },
         error: null,
       }),
+      signInWithPassword: jest.fn().mockResolvedValue({
+        data: {
+          user: { id: 'uuid-123', user_metadata: { role: 'student' } },
+          session: { access_token: 'access-123', refresh_token: 'refresh-123' }
+        },
+        error: null
+      }),
+      admin: {
+        createUser: jest.fn().mockResolvedValue({
+          data: { user: { id: 'uuid-123' } },
+          error: null
+        }),
+        signOut: jest.fn().mockResolvedValue({ error: null })
+      }
     },
   },
 }));
@@ -57,6 +71,7 @@ describe('POST /api/auth/signup', () => {
   });
 
   it('returns 400 when role is invalid', async () => {
+    query.mockResolvedValueOnce({ rows: [] }); // auth middleware mock 
     const res = await request(app)
       .post('/api/auth/signup')
       .send({ ...validSignup, role: 'admin' });
@@ -87,10 +102,10 @@ describe('POST /api/auth/signup', () => {
     const res = await request(app)
       .post('/api/auth/signup')
       .send(validSignup);
-    // Should be 201 Created with a token
-    expect([200, 201]).toContain(res.status);
+    // Should be 201 Created
+    expect(res.status).toBe(201);
     if (res.status === 201 || res.status === 200) {
-      expect(res.body).toHaveProperty('token');
+      expect(res.body).toHaveProperty('user');
     }
   });
 });
@@ -103,11 +118,17 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 401 when user does not exist', async () => {
-    query.mockResolvedValueOnce({ rows: [] }); // no user found
+    // We expect signInWithPassword to fail so we need to mock it here
+    const { supabaseAdmin } = require('../config/supabase');
+    supabaseAdmin.auth.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Invalid email or password' }
+    });
+
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: 'nobody@example.com', password: 'x' });
-    expect([400, 401]).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 });
 

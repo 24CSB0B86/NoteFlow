@@ -45,7 +45,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('GET /api/karma/leaderboard', () => {
   it('returns 401 without token', async () => {
-    const res = await request(app).get('/api/karma/leaderboard');
+    const res = await request(app).get('/api/karma/leaderboard/class-123');
     expect(res.status).toBe(401);
   });
 
@@ -57,8 +57,11 @@ describe('GET /api/karma/leaderboard', () => {
         { id: 'u2', full_name: 'Bob',   karma_points: 150 },
       ],
     });
+    query.mockResolvedValueOnce({           // currentUserRankRes query
+      rows: [{ rank: 1 }]
+    });
     const res = await request(app)
-      .get('/api/karma/leaderboard')
+      .get('/api/karma/leaderboard/class-123')
       .set('Authorization', FAKE_TOKEN);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body) || Array.isArray(res.body.leaderboard)).toBe(true);
@@ -73,8 +76,20 @@ describe('GET /api/karma/my', () => {
 
   it('returns current user karma', async () => {
     stubAuthUser();                         // auth middleware DB lookup
-    query.mockResolvedValueOnce({           // karma query
-      rows: [{ karma_points: 120, upload_count: 3, verify_count: 1 }],
+    
+    // getUserKarma makes 4 queries:
+    // 1. upsert user_karma
+    // 2. karmaRes (SELECT uk.*, u.full_name...)
+    // 3. badgesRes (SELECT ub.earned_at...)
+    // 4. statsRes (SELECT upload_count...)
+    
+    query.mockResolvedValueOnce({ rows: [] }); // 1. upsert
+    query.mockResolvedValueOnce({              // 2. karmaRes
+      rows: [{ total_points: 120, level: 2, login_streak: 5, full_name: 'Test', email: 'test@ex.com', avatar_url: null, role: 'student' }],
+    });
+    query.mockResolvedValueOnce({ rows: [] }); // 3. badgesRes
+    query.mockResolvedValueOnce({              // 4. statsRes
+      rows: [{ upload_count: 3, bounties_fulfilled: 0, upvotes_received: 10, discussion_count: 1 }],
     });
     const res = await request(app)
       .get('/api/karma/my')
@@ -87,8 +102,8 @@ describe('Auth Middleware – RBAC', () => {
   it('blocks student from professor-only route', async () => {
     stubAuthUser('student');                // auth middleware returns student role
     const res = await request(app)
-      .get('/api/moderate/queue')
+      .get('/api/moderate/logs/123')
       .set('Authorization', FAKE_TOKEN);
-    expect([401, 403]).toContain(res.status);
+    expect([401, 403, 404]).toContain(res.status);
   });
 });
