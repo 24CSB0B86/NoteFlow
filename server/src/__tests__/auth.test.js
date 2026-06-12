@@ -71,7 +71,6 @@ describe('POST /api/auth/signup', () => {
   });
 
   it('returns 400 when role is invalid', async () => {
-    query.mockResolvedValueOnce({ rows: [] }); // auth middleware mock 
     const res = await request(app)
       .post('/api/auth/signup')
       .send({ ...validSignup, role: 'admin' });
@@ -89,10 +88,9 @@ describe('POST /api/auth/signup', () => {
   });
 
   it('creates user and returns 201 with token', async () => {
-    // mock: no existing user check → 0 rows
-    query.mockResolvedValueOnce({ rows: [] });
-    // mock: INSERT user → return user row
+    // mock: INSERT user → return success
     query.mockResolvedValueOnce({
+      rowCount: 1,
       rows: [{
         id: 'uuid-123', email: validSignup.email,
         full_name: validSignup.full_name, role: 'student',
@@ -140,6 +138,12 @@ describe('GET /api/auth/me', () => {
   });
 
   it('returns 401 with a malformed token', async () => {
+    const { supabaseAdmin } = require('../config/supabase');
+    supabaseAdmin.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: 'Invalid token' }
+    });
+
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', 'Bearer not-a-valid-jwt');
