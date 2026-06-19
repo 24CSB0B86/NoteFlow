@@ -48,7 +48,12 @@ export default function HighlightLayer({
       return
     }
 
-    const pageEl = layerRef.current?.closest('.react-pdf__Page')
+    // The overlay slot is a sibling of .react-pdf__Page inside a common parent wrapper.
+    // Walk up to the page wrapper div (data-page attr), then find the sibling Page element.
+    const overlaySlot = layerRef.current?.closest('[id^="pdf-overlay-page-"]')
+    const pageWrapper = overlaySlot?.parentElement  // div[data-page]
+    const pageEl = pageWrapper?.querySelector('.react-pdf__Page') || overlaySlot
+
     if (!pageEl) return
 
     const info = getRelativeCoords(selection, pageEl)
