@@ -20,8 +20,9 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 function RejectModal({ open, onClose, onReject }) {
   const [reason, setReason] = useState('')
+  const handleClose = () => { setReason(''); onClose() }
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>Reject Submission</DialogTitle></DialogHeader>
         <div className="space-y-3">
@@ -30,8 +31,8 @@ function RejectModal({ open, onClose, onReject }) {
             <Textarea placeholder="Why is this being rejected?" value={reason} onChange={e => setReason(e.target.value)} rows={3} />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-            <Button variant="destructive" onClick={() => onReject(reason)} className="flex-1">Reject</Button>
+            <Button variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
+            <Button variant="destructive" onClick={() => { onReject(reason); handleClose() }} className="flex-1">Reject</Button>
           </div>
         </div>
       </DialogContent>

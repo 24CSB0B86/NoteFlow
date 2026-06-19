@@ -52,9 +52,9 @@ const uploadResource = [
       const { syllabus_node_id, classroom_id, doc_type, year, tags, description } = req.body;
       console.log(`[Resource] POST /upload – file: "${file?.originalname}" size: ${file?.size} classroom: ${classroom_id} user: ${req.user.id}`);
 
-      if (!syllabus_node_id || !classroom_id) {
-        console.warn('[Resource] Upload rejected – missing syllabus_node_id or classroom_id');
-        return res.status(400).json({ error: 'syllabus_node_id and classroom_id are required' });
+      if (!classroom_id) {
+        console.warn('[Resource] Upload rejected – missing classroom_id');
+        return res.status(400).json({ error: 'classroom_id is required' });
       }
 
       // Validate type & size
@@ -77,7 +77,9 @@ const uploadResource = [
       }
 
       const resourceId = uuidv4();
-      const filePath = `resources/${classroom_id}/${syllabus_node_id}/${resourceId}.${typeInfo.ext}`;
+      // Use a generic folder when no syllabus node is set (e.g. bounty uploads)
+      const nodeFolder = syllabus_node_id || 'bounty-uploads';
+      const filePath = `resources/${classroom_id}/${nodeFolder}/${resourceId}.${typeInfo.ext}`;
 
       // Convert Multer Buffer to Uint8Array for Supabase fetch compat
       const fileData = new Uint8Array(file.buffer);
@@ -92,12 +94,13 @@ const uploadResource = [
       if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
 
       // Check for existing resource with same name → version control
-      const existingRes = await query(
+      // Skip dedup when there's no node (bounty upload — always create fresh)
+      const existingRes = syllabus_node_id ? await query(
         `SELECT id FROM resources
          WHERE syllabus_node_id = $1 AND classroom_id = $2 AND file_name = $3
          LIMIT 1`,
         [syllabus_node_id, classroom_id, file.originalname]
-      );
+      ) : { rows: [] };
 
       let finalResourceId;
       let versionNumber = 1;

@@ -1,16 +1,20 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// Strip sslmode & channel_binding from the URL — we set SSL explicitly below.
+// This prevents pg-connection-string's SSL deprecation warning on startup.
+const cleanUrl = (process.env.DATABASE_URL || '')
+  .replace(/[?&]sslmode=[^&]*/g, '')
+  .replace(/[?&]channel_binding=[^&]*/g, '')
+  .replace(/\?&/, '?')   // fix "?&" edge case if sslmode was first param
+  .replace(/\?$/, '');   // strip trailing "?" if all params were removed
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: cleanUrl,
   ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-});
-
-pool.on('connect', () => {
-  console.log('🗄️  Connected to Neon DB (PostgreSQL)');
 });
 
 pool.on('error', (err) => {

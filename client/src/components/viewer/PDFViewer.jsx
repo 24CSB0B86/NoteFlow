@@ -294,12 +294,11 @@ export default function PDFViewer({ fileUrl, fileName, onPageChange, overlayRef 
                         renderAnnotationLayer={true}
                         loading={<PageSkeleton width={pageWidth} height={Math.round(pageWidth * 1.294)} />}
                       />
-                      {/* Overlay slot – heatmap and highlights always rendered so OverlayInjector can find them */}
+                      {/* Overlay slot – inset-0 so it matches actual rendered page height */}
                       <div
                         className="absolute inset-0 pointer-events-none"
                         id={`pdf-overlay-page-${pg}`}
                         data-page-num={pg}
-                        style={{ width: pageWidth, height: Math.round(pageWidth * 1.294) }}
                       />
                     </>
                   ) : (

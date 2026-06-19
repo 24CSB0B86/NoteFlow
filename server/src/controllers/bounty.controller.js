@@ -4,6 +4,9 @@ const { query } = require('../config/db');
 const {
   awardKarma,
   createNotification,
+  ensureKarmaRow,
+  getLevelInfo,
+  checkAndAwardBadges,
 } = require('../services/karmaEngine');
 const {
   sendBountyClaimedEmail,
@@ -99,7 +102,13 @@ const getBounties = async (req, res) => {
       `SELECT b.*, u.full_name AS requester_name, u.avatar_url AS requester_avatar,
               n.title AS node_title,
               claimer.full_name AS claimer_name,
-              (SELECT COUNT(*) FROM bounty_submissions WHERE bounty_id = b.id) AS submission_count
+              (SELECT COUNT(*) FROM bounty_submissions WHERE bounty_id = b.id) AS submission_count,
+              (SELECT bs.status FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submission_status,
+              (SELECT bs.note FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submission_note,
+              (SELECT u2.full_name FROM bounty_submissions bs JOIN users u2 ON u2.id = bs.fulfiller_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submitter_name,
+              (SELECT bs.resource_id FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_id,
+              (SELECT r.file_url FROM bounty_submissions bs JOIN resources r ON r.id = bs.resource_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_url,
+              (SELECT r.file_name FROM bounty_submissions bs JOIN resources r ON r.id = bs.resource_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_filename
        FROM bounties b
        JOIN users u ON u.id = b.requester_id
        LEFT JOIN syllabus_nodes n ON n.id = b.syllabus_node_id
@@ -124,7 +133,13 @@ const getMyBounties = async (req, res) => {
 
     const created = await query(
       `SELECT b.*, n.title AS node_title,
-              (SELECT COUNT(*) FROM bounty_submissions WHERE bounty_id = b.id) AS submission_count
+              (SELECT COUNT(*) FROM bounty_submissions WHERE bounty_id = b.id) AS submission_count,
+              (SELECT bs.status FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submission_status,
+              (SELECT bs.note FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submission_note,
+              (SELECT u2.full_name FROM bounty_submissions bs JOIN users u2 ON u2.id = bs.fulfiller_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_submitter_name,
+              (SELECT bs.resource_id FROM bounty_submissions bs WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_id,
+              (SELECT r.file_url FROM bounty_submissions bs JOIN resources r ON r.id = bs.resource_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_url,
+              (SELECT r.file_name FROM bounty_submissions bs JOIN resources r ON r.id = bs.resource_id WHERE bs.bounty_id = b.id ORDER BY bs.submitted_at DESC LIMIT 1) AS latest_resource_filename
        FROM bounties b LEFT JOIN syllabus_nodes n ON n.id = b.syllabus_node_id
        WHERE b.requester_id = $1 ORDER BY b.created_at DESC`,
       [req.user.id]
@@ -167,13 +182,17 @@ const claimBounty = async (req, res) => {
       [req.user.id, id]
     );
 
-    // Notify requester
-    const requester = await query(`SELECT email, full_name FROM users WHERE id = $1`, [b.requester_id]);
+    // Bug fix: req.user only has id+role from JWT — fetch full_name from DB
+    const [claimer, requester] = await Promise.all([
+      query(`SELECT full_name FROM users WHERE id = $1`, [req.user.id]),
+      query(`SELECT email, full_name FROM users WHERE id = $1`, [b.requester_id]),
+    ]);
+    const claimerName = claimer.rows[0]?.full_name || 'Someone';
     if (requester.rows[0]) {
       await createNotification(b.requester_id, 'bounty_claimed',
-        '🏹 Your bounty was claimed!', `${req.user.full_name} is working on "${b.title}"`, `/bounties`);
+        '🏹 Your bounty was claimed!', `${claimerName} is working on "${b.title}"`, `/bounties`);
       await safeEmail(
-        () => sendBountyClaimedEmail(requester.rows[0].email, requester.rows[0].full_name, b.title, req.user.full_name),
+        () => sendBountyClaimedEmail(requester.rows[0].email, requester.rows[0].full_name, b.title, claimerName),
         'bounty_claimed'
       );
     }
@@ -239,6 +258,11 @@ const approveBounty = async (req, res) => {
     const bounty = await _getRequester(id);
     if (!bounty) return res.status(404).json({ error: 'Bounty not found' });
 
+    // Bug fix: guard against double-approving an already fulfilled/closed bounty
+    if (bounty.status !== 'claimed') {
+      return res.status(400).json({ error: `Bounty cannot be approved in its current status: ${bounty.status}` });
+    }
+
     // Only requester or professor can approve
     if (bounty.requester_id !== req.user.id && req.user.role !== 'professor') {
       return res.status(403).json({ error: 'Only the requester or professor can approve' });
@@ -247,10 +271,11 @@ const approveBounty = async (req, res) => {
     const sub = await query(
       `SELECT bs.*, u.email, u.full_name FROM bounty_submissions bs
        JOIN users u ON u.id = bs.fulfiller_id
-       WHERE bs.bounty_id = $1 AND bs.status = 'pending' LIMIT 1`,
+       WHERE bs.bounty_id = $1 AND bs.status = 'pending'
+       ORDER BY bs.submitted_at DESC LIMIT 1`,
       [id]
     );
-    if (sub.rows.length === 0) return res.status(404).json({ error: 'No pending submission' });
+    if (sub.rows.length === 0) return res.status(404).json({ error: 'No pending submission found' });
 
     const submission = sub.rows[0];
 
@@ -269,22 +294,38 @@ const approveBounty = async (req, res) => {
       );
     }
 
-    // Award karma to fulfiller
-    const karmaResult = await awardKarma(submission.fulfiller_id, 'bounty_fulfill', id,
-      `Fulfilled bounty: "${bounty.title}"`);
+    // Bug fix: award the bounty's own points_reward, not the hardcoded karma table value (20)
+    // We directly insert the transaction and update karma to honour the custom reward
+    const pointsToAward = bounty.points_reward;
+    await ensureKarmaRow(submission.fulfiller_id);
+    await query(
+      `INSERT INTO karma_transactions (user_id, points, action_type, reference_id, description)
+       VALUES ($1, $2, 'bounty_fulfill', $3, $4)`,
+      [submission.fulfiller_id, pointsToAward, id, `Fulfilled bounty: "${bounty.title}"`]
+    );
+    const updatedKarma = await query(
+      `UPDATE user_karma SET total_points = GREATEST(0, total_points + $1)
+       WHERE user_id = $2 RETURNING total_points`,
+      [pointsToAward, submission.fulfiller_id]
+    );
+    const newTotal = updatedKarma.rows[0]?.total_points ?? 0;
+    // Update level
+    const { level } = getLevelInfo(newTotal);
+    await query(`UPDATE user_karma SET level = $1 WHERE user_id = $2`, [level, submission.fulfiller_id]);
+    await checkAndAwardBadges(submission.fulfiller_id);
 
-    console.log(`[Bounty] ✅ Bounty ${id} approved – karma awarded: ${karmaResult.pointsAwarded}`);
+    console.log(`[Bounty] ✅ Bounty ${id} approved – karma awarded: ${pointsToAward} (bounty reward)`);
 
     // Notify fulfiller
     await createNotification(submission.fulfiller_id, 'bounty_approved',
-      `⚡ Bounty approved! +${karmaResult.pointsAwarded} karma`,
+      `⚡ Bounty approved! +${pointsToAward} karma`,
       `Your submission for "${bounty.title}" was approved!`, `/profile`);
     await safeEmail(
-      () => sendBountyApprovedEmail(submission.email, submission.full_name, bounty.title, karmaResult.pointsAwarded),
+      () => sendBountyApprovedEmail(submission.email, submission.full_name, bounty.title, pointsToAward),
       'bounty_approved'
     );
 
-    res.json({ success: true, karmaAwarded: karmaResult.pointsAwarded });
+    res.json({ success: true, karmaAwarded: pointsToAward });
   } catch (err) {
     console.error('[Bounty] ❌ approveBounty error:', err.message);
     res.status(500).json({ error: err.message });
@@ -301,6 +342,11 @@ const rejectBounty = async (req, res) => {
     const bounty = await _getRequester(id);
     if (!bounty) return res.status(404).json({ error: 'Bounty not found' });
 
+    // Bug fix: guard against rejecting already fulfilled/closed bounties
+    if (!['claimed'].includes(bounty.status)) {
+      return res.status(400).json({ error: `Bounty cannot be rejected in its current status: ${bounty.status}` });
+    }
+
     if (bounty.requester_id !== req.user.id && req.user.role !== 'professor') {
       return res.status(403).json({ error: 'Only the requester or professor can reject' });
     }
@@ -308,7 +354,8 @@ const rejectBounty = async (req, res) => {
     const sub = await query(
       `SELECT bs.*, u.email, u.full_name FROM bounty_submissions bs
        JOIN users u ON u.id = bs.fulfiller_id
-       WHERE bs.bounty_id = $1 AND bs.status = 'pending' LIMIT 1`,
+       WHERE bs.bounty_id = $1 AND bs.status = 'pending'
+       ORDER BY bs.submitted_at DESC LIMIT 1`,
       [id]
     );
     if (sub.rows.length === 0) return res.status(404).json({ error: 'No pending submission' });

@@ -35,7 +35,8 @@ export default function SubmitBountyModal({ open, onClose, bounty, onSubmitted }
       // 1. Upload the resource file first
       const fd = new FormData()
       fd.append('file', file)
-      fd.append('syllabus_node_id', bounty.syllabus_node_id || '')
+      // Only append syllabus_node_id if the bounty actually has one
+      if (bounty.syllabus_node_id) fd.append('syllabus_node_id', bounty.syllabus_node_id)
       fd.append('classroom_id', bounty.classroom_id)
       fd.append('description', note)
 

@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import ResourceList from '../components/resources/ResourceList'
+import Leaderboard from '../components/karma/Leaderboard'
 import {
   Users, ChevronRight, ChevronDown, Plus, Trash2,
   FileText, AlertCircle, CheckCircle, BarChart2, ArrowLeft, FolderOpen, Trophy, GraduationCap, BookOpen
@@ -338,9 +339,10 @@ export default function ClassroomDetailPage() {
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-border">
           {[
-            { id: 'syllabus', label: 'Syllabus Tree', icon: FileText },
-            { id: 'members', label: `Members (${members.length})`, icon: Users },
-            { id: 'analysis', label: 'Gap Analysis', icon: BarChart2 },
+            { id: 'syllabus',     label: 'Syllabus Tree',           icon: FileText },
+            { id: 'members',     label: `Members (${members.length})`, icon: Users },
+            { id: 'analysis',    label: 'Gap Analysis',             icon: BarChart2 },
+            { id: 'leaderboard', label: 'Leaderboard',              icon: Trophy },
           ].map(tab => (
             <button
               key={tab.id}
@@ -453,6 +455,13 @@ export default function ClassroomDetailPage() {
 
         {/* Gap Analysis Tab */}
         {activeTab === 'analysis' && <GapAnalysisPanel classroomId={id} />}
+
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <div className="max-w-xl">
+            <Leaderboard classroomId={id} />
+          </div>
+        )}
       </div>
     </Layout>
   )

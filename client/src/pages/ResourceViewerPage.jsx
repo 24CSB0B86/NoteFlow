@@ -310,32 +310,28 @@ function OverlayInjector({
         const pageHighlights = ownHighlights.filter(h => h.page_number === pg)
 
         return createPortal(
-          <div className="absolute inset-0 pointer-events-none" style={{ width: pageWidth, height: pageHeight }}>
+          <div className="absolute inset-0 pointer-events-none">
             {/* Heatmap canvas overlay */}
             {showHeatmap && pg === currentPage && (
-              <div className="pointer-events-none absolute inset-0">
-                <HeatmapOverlay
-                  zones={heatmapZones}
-                  pageWidth={pageWidth}
-                  pageHeight={pageHeight}
-                  visible={showHeatmap}
-                  highlightCount={heatmapHighlightCount}
-                />
-              </div>
+              <HeatmapOverlay
+                zones={heatmapZones}
+                pageWidth={pageWidth}
+                pageHeight={pageHeight}
+                visible={showHeatmap}
+                highlightCount={heatmapHighlightCount}
+              />
             )}
-            {/* Highlight selection layer */}
+            {/* Highlight layer — pointer-events managed per-element inside */}
             {showHighlights && (
-              <div className="pointer-events-auto absolute inset-0">
-                <HighlightLayer
-                  resourceId={resourceId}
-                  pageNumber={pg}
-                  pageWidth={pageWidth}
-                  pageHeight={pageHeight}
-                  highlights={pageHighlights}
-                  onHighlightAdded={onHighlightAdded}
-                  onHighlightDeleted={onHighlightDeleted}
-                />
-              </div>
+              <HighlightLayer
+                resourceId={resourceId}
+                pageNumber={pg}
+                pageWidth={pageWidth}
+                pageHeight={pageHeight}
+                highlights={pageHighlights}
+                onHighlightAdded={onHighlightAdded}
+                onHighlightDeleted={onHighlightDeleted}
+              />
             )}
           </div>,
           slot

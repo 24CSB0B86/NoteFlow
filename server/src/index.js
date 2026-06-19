@@ -103,10 +103,39 @@ app.use((err, req, res, _next) => {
 
 // Only start listening when run directly (not when require()'d by Jest tests)
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`\n🚀 NoteFlow API running on http://localhost:${PORT}`);
-    console.log(`🤖 Chatbot: ${process.env.OPENAI_API_KEY ? 'OpenAI GPT-3.5-turbo' : 'Rule-based FAQ fallback'}`);
-    console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  app.listen(PORT, async () => {
+    const line = '═'.repeat(54);
+    console.log(`\n${line}`);
+    console.log(`  🚀  NoteFlow API  ·  http://localhost:${PORT}`);
+    console.log(`  📋  Mode : ${(process.env.NODE_ENV || 'development').toUpperCase()}`);
+    console.log(`  🤖  AI   : ${process.env.OPENAI_API_KEY ? 'OpenAI GPT-3.5-turbo' : 'Rule-based FAQ fallback'}`);
+    console.log(line);
+
+    // ── Neon DB ping ──────────────────────────────────────────
+    try {
+      const { pool } = require('./config/db');
+      const t0 = Date.now();
+      const r  = await pool.query('SELECT NOW()');
+      const ms = Date.now() - t0;
+      console.log(`  ✅  Neon DB      connected  (${ms}ms)  ${r.rows[0].now.toISOString()}`);
+    } catch (e) {
+      console.log(`  ❌  Neon DB      FAILED — ${e.message}`);
+    }
+
+    // ── Supabase ping ─────────────────────────────────────────
+    try {
+      const { supabaseAdmin } = require('./config/supabase');
+      const t0 = Date.now();
+      const { data, error } = await supabaseAdmin.storage.listBuckets();
+      const ms = Date.now() - t0;
+      if (error) throw new Error(error.message);
+      const buckets = data.map(b => b.name).join(', ') || '(none)';
+      console.log(`  ✅  Supabase     connected  (${ms}ms)  buckets: ${buckets}`);
+    } catch (e) {
+      console.log(`  ❌  Supabase     FAILED — ${e.message}`);
+    }
+
+    console.log(`${line}\n`);
   });
 }
 
